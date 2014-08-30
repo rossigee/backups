@@ -13,6 +13,11 @@ class MySQL:
         self.type = "MySQL"
         config_id = 'mysql-%s' % backup_id
         self.dbname = config.get(config_id, 'dbname')
+        if config.has_option(config_id, 'defaults'):
+            self.defaults = config.get(config_id, 'defaults')
+        if config.has_option(config_id, 'noevents'):
+            self.noevents = config.get(config_id, 'noevents')
+        self.dbname = config.get(config_id, 'dbname')
         if config.has_option(config_id, 'name'):
             self.name = config.get(config_id, 'name')
         if config.has_option(config_id, 'passphrase'):
@@ -29,9 +34,13 @@ class MySQL:
         zipfilename = '%s/%s.sql.gz' % (self.tmpdir, self.id)
         logging.info("Backing up '%s' (%s)..." % (self.name, self.type))
         zipfile = open(zipfilename, 'wb')
-        dumpargs = ['mysqldump', '--events', self.dbname]
-        if self.hostname == 'vps2.agentdesign.co.uk':
-            dumpargs = ['mysqldump', self.dbname]
+        if 'defaults' in dir(self):
+            dumpargs = ['mysqldump', '--defaults-file=%s' % self.defaults]
+        else:
+            dumpargs = ['mysqldump', ]
+        if not 'noevents' in dir(self) or not self.noevents:
+            dumpargs.append('--events')
+        dumpargs.append(self.dbname)
         dumpproc1 = subprocess.Popen(dumpargs, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         dumpproc2 = subprocess.Popen(['gzip'], stdin=dumpproc1.stdout, stdout=zipfile)
         dumpproc1.stdout.close()

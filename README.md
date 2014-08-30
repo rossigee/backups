@@ -99,6 +99,7 @@ You can specify one or more folders to be backed up.
 
 ```
 [folder-accountsdata]
+name=Live Accounts Data
 path=/var/lib/myaccountspkg/data
 passphrase="your-secret-is-safe-with-me"
 ```
@@ -106,6 +107,7 @@ passphrase="your-secret-is-safe-with-me"
 You can specify multiple 'exclude' parameters to tell tar which folders/files to exclude too.
 
 [folder-websitedata]
+name=Live Website Data
 path=/var/www/htdocs
 passphrase="your-secret-is-safe-with-me"
 exclude=logs
@@ -120,6 +122,7 @@ You can specify one of more mySQL databases to be backed up.
 
 ```
 [mysql-livesupportdb]
+name=Live Company Data
 dbname=livecompanydb
 passphrase="your-devs-will-know-this"
 ```
@@ -130,11 +133,27 @@ The 'mysqlclient' gets it's host, username and password from the 'backups' user'
 # cat >/home/backups/.my.cnf <<EOF
 [client]
 host=typically.localhost
-user=thatsme
-password=youguessit
 EOF
 # chown backups /home/backups/.my.cnf
 # chmod 400 /home/backups/.my.cnf
+```
+
+You can specify an alternative, per-source MySQL 'defaults' file, containing individual credentials for each one, using the 'defaults' parameter. This parameter is used for the '--defaults-file' argument to mysqldump.
+
+```
+[client]
+host=specific.host.database.com
+...
+defaults=/etc/backups/mysql-specific.conf
+```
+
+By default, the '--events' flag is passed to mysqldump. This may break older versions of mysqldump (prior to version 5.1, IIRC), so you can disable this flag with the 'noevents' parameter.
+
+```
+[client]
+host=specific.host.database.com
+...
+noevents=1
 ```
 
 
