@@ -4,6 +4,12 @@ import os, os.path
 
 from backups.exceptions import BackupException
 
+def sizeof_fmt(num):
+    for x in ['bytes','KB','MB','GB','TB']:
+        if num < 1024.0:
+            return "%3.1f %s" % (num, x)
+        num /= 1024.0
+
 class SMTP:
     def __init__(self, config):
         self.host = config.get('smtp', 'host')
@@ -26,10 +32,10 @@ class SMTP:
     def notify_success(self, name, backuptype, hostname, filename):
         if 'success_to' not in dir(self) or not self.success_to:
             return
-        filesize = os.path.getsize(filename)
+        filesize = sizeof_fmt(os.path.getsize(filename))
         fromaddr = self.success_to
         toaddrs = [fromaddr]
-        msg = MIMEText("Successfully backed up %s (%s) [size: %d bytes]" % (name, backuptype, filesize))
+        msg = MIMEText("Successfully backed up %s (%s) [size: %s]" % (name, backuptype, filesize))
         msg['Subject'] = "Backup of %s (%s) on %s was successful" % (name, backuptype, hostname)
         msg['X-Backup-Name'] = hostname
         msg['X-Backup-Type'] = backuptype
