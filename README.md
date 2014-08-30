@@ -30,9 +30,7 @@ The sources will be used to generate dump files in a temporary working area. By 
 
 Backups will be encrypted with a given passphrase (using GnuPG), and put into a folder on the destination using the following filename pattern...
 
-<pre>
-/{hostname}/{yyyy-mm-dd}/{dumpfile_id}.{sql|tar}.gz.gpg
-</pre>
+    /{hostname}/{yyyy-mm-dd}/{dumpfile_id}.{sql|tar}.gz.gpg
 
 There is currently no provision for automatic housekeeping. For now, I manually remove older backups from time to time, leaving one or two for those moments that may require a tardis.
 
@@ -44,29 +42,29 @@ Installation
 
 1. Install me. Unpack me, run 'python setup.py' as root.
 
-2. Create a configuration file listing the folders/databases you want to back up, an encryption passphrase, and one or more places you want the encrypted dump file uploaded to, and details of any notification methods you wish to use. See docs further down for examples. You can install the dependencies now, or you can wait until you get errors later :)
+1. Create a configuration file listing the folders/databases you want to back up, an encryption passphrase, and one or more places you want the encrypted dump file uploaded to, and details of any notification methods you wish to use. See docs further down for examples. You can install the dependencies now, or you can wait until you get errors later :)
 
-3. Create a 'backups' user, and add a cron job to run the script as you wish. If you need folders to be backed up, you will also need a 'sudoers' directive to allow the backups user to run 'tar' as root to do it's work. 
+1. Create a 'backups' user, and add a cron job to run the script as you wish. If you need folders to be backed up, you will also need a 'sudoers' directive to allow the backups user to run 'tar' as root to do it's work.
 
-<pre>
+```
 # cat >/etc/sudoers.d/99-backups <<EOF
 backups ALL=(ALL) NOPASSWD: /bin/tar
 EOF
-</pre>
+```
 
-4. Test your configuration by doing an initial run of the backup.
+1. Test your configuration by doing an initial run of the backup.
 
-<pre>
+``` bash
 # sudo -H -u backups /usr/local/bin/backup -v /home/backups/mynightlybackup.cfg
-</pre>
+```
 
-5. Add it to cron.
+1. Add it to cron.
 
-<pre>
+```
 # cat >/etc/cron.d/nightly-backups.conf <<EOF
 0 2 * * * backups /usr/local/bin/backup /home/backups/mynightlybackup.cfg
 EOF
-</pre>
+```
 
 You're done.
 
@@ -80,12 +78,12 @@ No assumptions are made as to where to store the configuration file. It is speci
 
 The configuration file needs to contain a common configuration block that defines the bits that are not specific to a particular source, destination or notification.
 
-<pre>
+```
 [defaults]
 hostname=my.hostname.com
 tmpdir=/var/tmp/backups
 passphrase=9a3d2ad085cd1fff0f43501a84e7913d
-</pre>
+```
 
 The 'host' parameter is used to identify the folder the backup should be stored in on the destination.
 
@@ -99,11 +97,11 @@ Source - Folder
 
 You can specify one or more folders to be backed up.
 
-<pre>
+```
 [folder-accountsdata]
 path=/var/lib/myaccountspkg/data
 passphrase="your-secret-is-safe-with-me"
-</pre>
+```
 
 
 Source - MySQL Database
@@ -111,15 +109,15 @@ Source - MySQL Database
 
 You can specify one of more mySQL databases to be backed up.
 
-<pre>
+```
 [mysql-livesupportdb]
 dbname=livecompanydb
 passphrase="your-devs-will-know-this"
-</pre>
+```
 
 The 'mysqlclient' gets it's host, username and password from the 'backups' user's '~/.my.cnf' file. This need to be configured:
 
-<pre>
+```
 # cat >/home/backups/.my.cnf <<EOF
 [client]
 host=typically.localhost
@@ -128,7 +126,7 @@ password=youguessit
 EOF
 # chown backups /home/backups/.my.cnf
 # chmod 400 /home/backups/.my.cnf
-</pre>
+```
 
 
 Source - PostgreSQL
@@ -144,19 +142,19 @@ Destination - S3
 
 You can specify an S3 bucket to back up to.
 
-<pre>
+```
 [s3-backups]
 bucket=backups-123456789
-</pre>
+```
 
 The 's3cmd' client gets it's authentication credentials and other configuration from the 'backups' user's '~/.s3cfg' file. This needs to be configured.
 
-<pre>
+```
 # # Assumes you have a 's3cfg' file to hand. If not, create/find one!
 # cp /tmp/example.s3cfg /home/backups/.s3cfg
 # chown backups /home/backups/.s3cfg
 # chmod 400 /home/backups/.s3cfg
-</pre>
+```
 
 
 Destination - Swift
@@ -170,16 +168,16 @@ Destination - Samba
 
 You can specify a Samba share to back up to.
 
-<pre>
+```
 [samba-backups]
 host=qnap.mycompany.com
 workgroup=WORKGROUP
 share=Backups
-</pre>
+```
 
 The 'smbclient' client is told to get it's configuration from the 'backups' user's '~/.smb.conf' file. This needs to be configured.
 
-<pre>
+```
 # cat >/home/backups/.smbauth <<EOF
 username = backups
 password = getyourown
@@ -187,7 +185,7 @@ domain = WORKGROUP
 EOF
 # chown backups /home/backups/.smbauth
 # chmod 400 /home/backups/.smbauth
-</pre>
+```
 
 
 Notification - Email
@@ -195,7 +193,7 @@ Notification - Email
 
 You can specify the SMTP configuration for notifications.
 
-<pre>
+```
 [smtp]
 host=smtp.mycompany.com
 port=587
@@ -205,7 +203,7 @@ use_tls=1
 use_ssl=0
 success_to=archive@mycompany.com
 failure_to=sysadmin@mycompany.com
-</pre>
+```
 
 The main parameters ('host', 'port', 'user', 'password', 'use_tls' and 'use_ssl') should be fairly self-explanatory. They are optional. If no details are supplied, defaults to 'localhost' port 25.
 
@@ -219,13 +217,13 @@ Notification - HipChat
 
 You can specify that a notification of success or failure (or just failure) is posted as a HipChat room notification by providing the HipChat API credentials.
 
-<pre>
+```
 [hipchat]
 auth_token=01235456yougetthisfromhipchatadmin
 room=Backups
 notify_success=0
 notify_failure=1
-</pre>
+```
 
 
 Complete Example
@@ -233,7 +231,7 @@ Complete Example
 
 This simple example backs up some folders and a database, and deposits them to a Samba share, notifying sysadmin on failure only.
 
-<pre>
+```
 [defaults]
 hostname=myserver.mycompany.com
 passphrase=64b0c7405f2d8051e2b9f02aa4898acc
@@ -254,12 +252,14 @@ bucket=backups-1234567
 [smtp]
 failure_to=you@mycompany.com
 
-</pre>
+```
 
 
 Credits
 -------
 
 Ross Golder <ross@golder.org>
-    BTC: 1EN5wttKpwi2cdWMeUVQ4Wy15jBJZSBCDn
-    LTC: LejNzHEmWRZ76CY5Kwhzijjbv3X6Yk3Paw
+
+BTC: 1EN5wttKpwi2cdWMeUVQ4Wy15jBJZSBCDn
+
+LTC: LejNzHEmWRZ76CY5Kwhzijjbv3X6Yk3Paw
