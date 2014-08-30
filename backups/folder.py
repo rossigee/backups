@@ -23,6 +23,10 @@ class Folder:
             self.tmpdir = config.get('defaults', 'tmpdir')
         else:
             self.tmpdir = "/var/tmp"
+        self.excludes = []
+        for k, v in config.items(config_id):
+            if k == 'exclude':
+                self.excludes.append(v)
         
     def dump(self):
         zipfilename = '%s/%s.tar.gz' % (self.tmpdir, self.id)
@@ -30,6 +34,9 @@ class Folder:
         zipfile = open(zipfilename, 'wb')
         os.chdir(os.path.dirname(self.path))
         dumpargs = ['sudo', 'tar', 'cfz', zipfilename, os.path.basename(self.path)]
+        for exclude in self.excludes:
+            dumpargs.append('--exclude')
+            dumpargs.append(exclude)
         dumpproc1 = subprocess.Popen(dumpargs, stdout=zipfile, stderr=subprocess.PIPE)
         dumpproc1.wait()
         exitcode = dumpproc1.returncode

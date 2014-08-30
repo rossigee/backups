@@ -103,6 +103,15 @@ path=/var/lib/myaccountspkg/data
 passphrase="your-secret-is-safe-with-me"
 ```
 
+You can specify multiple 'exclude' parameters to tell tar which folders/files to exclude too.
+
+[folder-websitedata]
+path=/var/www/htdocs
+passphrase="your-secret-is-safe-with-me"
+exclude=logs
+exclude=tmp
+```
+
 
 Source - MySQL Database
 -----------------------
