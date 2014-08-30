@@ -1,14 +1,19 @@
 import urllib, urllib2
+import os, os.path
 
 class Hipchat:
     def __init__(self, config):
         self.auth_token = config.get('hipchat', 'auth_token')
         self.room_id = config.get('hipchat', 'room_id')
-        self.notify_success = config.get('hipchat', 'notify_success')
-        self.notify_failure = config.get('hipchat', 'notify_failure')
+        self.notify_on_success = False
+        if config.has_option('hipchat', 'notify_on_success'):
+            self.notify_on_success = config.get('hipchat', 'notify_on_success')
+        self.notify_on_failure = True
+        if config.has_option('hipchat', 'notify_on_failure'):
+            self.notify_on_failure = config.get('hipchat', 'notify_on_failure')
     
     def notify_success(self, name, backuptype, hostname, filename):
-        if not self.notify_success:
+        if not self.notify_on_success:
             return
         filesize = os.path.getsize(filename)
         data = {
@@ -25,7 +30,7 @@ class Hipchat:
         response = f.read()
     
     def notify_failure(self, name, backuptype, hostname, e):
-        if not self.notify_failure:
+        if not self.notify_on_failure:
             return
         data = {
             'room_id': self.room_id,
