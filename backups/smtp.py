@@ -1,6 +1,10 @@
 import smtplib
-from email.mime.text import MIMEText
 import os, os.path
+
+try:
+    from email.mime.text import MIMEText
+except:
+    from email.MIMEText import MIMEText
 
 from backups.exceptions import BackupException
 
@@ -12,10 +16,16 @@ def sizeof_fmt(num):
 
 class SMTP:
     def __init__(self, config):
-        self.host = config.get('smtp', 'host')
-        self.port = config.get('smtp', 'port')
-        self.username = config.get('smtp', 'username')
-        self.password = config.get('smtp', 'password')
+        self.host = "127.0.0.1"
+        if config.has_option('smtp', 'host'):
+            self.host = config.get('smtp', 'host')
+        self.port = 25
+        if config.has_option('smtp', 'port'):
+            self.port = int(config.get('smtp', 'port'))
+        if config.has_option('smtp', 'username'):
+            self.username = config.get('smtp', 'username')
+        if config.has_option('smtp', 'password'):
+            self.password = config.get('smtp', 'password')
         try:
             self.use_tls = int(config.get('smtp', 'use_tls')) == 1
         except:
@@ -48,7 +58,8 @@ class SMTP:
         if self.use_tls:
             server.starttls()
             server.ehlo()
-        server.login(self.username, self.password)
+        if 'username' is dir(self):
+            server.login(self.username, self.password)
         server.sendmail(fromaddr, toaddrs, str(msg))
         server.quit()
 
@@ -71,7 +82,8 @@ class SMTP:
         if self.use_tls:
             server.starttls()
             server.ehlo()
-        server.login(self.username, self.password)
+        if 'username' is dir(self):
+            server.login(self.username, self.password)
         server.sendmail(fromaddr, toaddrs, str(msg))
         server.quit()
 
