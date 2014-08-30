@@ -4,8 +4,8 @@ class Hipchat:
     def __init__(self, config):
         self.auth_token = config.get('hipchat', 'auth_token')
         self.room_id = config.get('hipchat', 'room_id')
-        self.notify_success = config.git('hipchat', 'notify_success')
-        self.notify_failure = config.git('hipchat', 'notify_failure')
+        self.notify_success = config.get('hipchat', 'notify_success')
+        self.notify_failure = config.get('hipchat', 'notify_failure')
     
     def notify_success(self, name, backuptype, hostname, filename):
         if not self.notify_success:
