@@ -25,6 +25,6 @@ class Samba:
         uploadproc = subprocess.Popen(uploadargs, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         exitcode = uploadproc.wait()
         if exitcode != 0:
-            errmsg = uploadproc.stderr.read()
+            errmsg = "%s%s" % (uploadproc.stdout.read(), uploadproc.stderr.read())
             raise BackupException("Error while uploading: %s" % errmsg)
 
