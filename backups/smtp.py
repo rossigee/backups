@@ -29,7 +29,7 @@ class SMTP:
         try:
             self.use_tls = int(config.get('smtp', 'use_tls')) == 1
         except:
-            self.use_tls = False
+            self.use_tls = True
         try:
             self.use_ssl = int(config.get('smtp', 'use_ssl')) == 1 
         except:

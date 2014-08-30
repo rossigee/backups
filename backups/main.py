@@ -94,15 +94,14 @@ def main():
                 for notification in notifications:
                     notification.notify_success(source.name, source.type, hostname, dumpfile)
 
-            except Exception as e:
+            except Exception, e:
                 # Trigger notifications as required
                 for notification in notifications:
                     notification.notify_failure(source.name, source.type, hostname, e)
 
-            finally:
-                # Done with the dump file now
-                if 'dumpfile' in locals() and os.path.isfile(dumpfile):
-                   os.unlink(dumpfile)
+            # Done with the dump file now
+            if 'dumpfile' in locals() and os.path.isfile(dumpfile):
+               os.unlink(dumpfile)
         
         logging.debug("Complete.")
 
