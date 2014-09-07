@@ -165,6 +165,35 @@ Patches/pull requests welcome here!
 For now, I am just backing up the data on the filesystem using a 'folder' source, but it has a very low transaction volume, so it's not likely to be an issue.
 
 
+Source - Volume snapshots
+-------------------------
+
+This method allows us to specify a set of RDS/EC2 volumes. When sourced, this plugin which issue snapshot commands to the volumes specified.
+
+```
+[defaults]
+aws_access_key_id=...
+aws_secret_access_key=...
+
+[snapshot-rds-mainrdsdb]
+availability_zone=eu-west-1
+volume_id=mainrds
+
+[snapshot-ec2-mailfolders]
+availability_zone=eu-west-1
+volume_id=vol-81dc59c6
+
+[snapshot-ec2-mailfolders]
+availability_zone=eu-west-1
+volume_id=vol-81dc59c6
+
+```
+
+It leaves a temporary file with status details as a 'dumpfile'. This gives the destination plugin something to work with when reporting success.
+
+This source plugin is best used in a configuration on it's own, without a destination specified.
+
+
 Destination - S3
 ----------------
 
