@@ -14,6 +14,7 @@ import backups.mysql
 import backups.s3
 import backups.samba
 import backups.smtp
+import backups.snapshot
 import backups.hipchat
 
 from backups.exceptions import BackupException
@@ -52,8 +53,6 @@ def main():
             if section == 'samba':
                 destination = backups.samba.Samba(config)
                 destinations.append(destination)
-        if len(destinations) < 1:
-            raise BackupException("No destinations listed in configuration file.")
         
         # Instantiate handlers for any listed notifications
         notifications = []
@@ -76,8 +75,16 @@ def main():
                 backup_id = section[6:]
                 source = backups.mysql.MySQL(backup_id, config)
                 sources.append(source)
+            if section[0:13] == 'snapshot-ec2-':
+                backup_id = section[13:]
+                source = backups.snapshot.EC2Snapshot(backup_id, config)
+                sources.append(source)
+            if section[0:13] == 'snapshot-rds-':
+                backup_id = section[13:]
+                source = backups.snapshot.RDSSnapshot(backup_id, config)
+                sources.append(source)
         
-        if len(destinations) < 1:
+        if len(sources) < 1:
             raise BackupException("No sources listed in configuration file.")
         
         # Loop through the defined sources...
