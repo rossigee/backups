@@ -106,6 +106,7 @@ passphrase="your-secret-is-safe-with-me"
 
 You can specify multiple 'exclude' parameters to tell tar which folders/files to exclude too.
 
+```
 [folder-websitedata]
 name=Live Website Data
 path=/var/www/htdocs
