@@ -58,7 +58,7 @@ class SMTP:
         if self.use_tls:
             server.starttls()
             server.ehlo()
-        if 'username' is dir(self):
+        if 'username' in dir(self):
             server.login(self.username, self.password)
         server.sendmail(fromaddr, toaddrs, str(msg))
         server.quit()
