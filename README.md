@@ -279,8 +279,8 @@ You can specify that a notification of success or failure (or just failure) is p
 [hipchat]
 auth_token=01235456yougetthisfromhipchatadmin
 room=Backups
-notify_on_success=0
-notify_on_failure=1
+notify_on_success=False
+notify_on_failure=True
 ```
 
 
