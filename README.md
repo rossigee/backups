@@ -11,7 +11,8 @@ Roughly speaking there are 'sources', 'destinations' and 'notifications'.
 Currently implemented sources are:
 
 * folders (using tar)
-* databases (using mysqldump).
+* MySQL databases (using mysqldump).
+* RDS database snapshots (using mysqldump).
 
 Currently implemented destinations are:
 
@@ -134,6 +135,8 @@ The 'mysqlclient' gets it's host, username and password from the 'backups' user'
 # cat >/home/backups/.my.cnf <<EOF
 [client]
 host=typically.localhost
+user=backups
+password=mybackuppassword
 EOF
 # chown backups /home/backups/.my.cnf
 # chmod 400 /home/backups/.my.cnf
@@ -156,6 +159,73 @@ host=specific.host.database.com
 ...
 noevents=1
 ```
+
+
+Source - RDS Database Snapshots
+-----------------------
+
+You can specify one or more RDS databases to be backed up, where they have automated rolling backups enabled.
+
+The last automatic snapshot of the given database will be identified using the AWS credentials provided. That will then be restored to a temporary instance, in a security group that allows access to the agent machine. The agent machine (running this script), will then 'mysqldump' the data to a '.sql.gz' file, and destroy the temporary instance.
+
+WARNING: This can take a very long time in many cases.
+
+```
+[rds-livesupportdb]
+name=Live Company Data
+dbname=livecompanydb
+passphrase="your-devs-will-know-this"
+region=eu-west-1
+security_group=livedbbackup
+instance_class=db.m1.small
+defaults=/home/backups/mysql-livedb.conf
+
+```
+
+This module uses the 'boto' package, and expects auth credentials to be provided in the '~/.boto' file. This needs to be configured:
+
+```
+# cat >/home/backups/.boto <<EOF
+[Credentials]
+aws_access_key_id = YOURACCESSKEY
+aws_secret_access_key = YOURSECRETKEY
+EOF
+# chown backups /home/backups/.boto
+# chmod 400 /home/backups/.boto
+```
+
+The 'mysqlclient' gets it's host, username and password from the 'backups' user's '~/.my.cnf' file. This need to be configured:
+
+```
+# cat >/home/backups/.my.cnf <<EOF
+[client]
+host=typically.localhost
+user=backups
+password=mybackuppassword
+EOF
+# chown backups /home/backups/.my.cnf
+# chmod 400 /home/backups/.my.cnf
+```
+
+You can specify an alternative, per-source MySQL 'defaults' file, containing individual credentials for each one, using the 'defaults' parameter. This parameter is used for the '--defaults-file' argument to mysqldump.
+
+```
+[client]
+host=specific.host.database.com
+...
+defaults=/etc/backups/mysql-specific.conf
+```
+
+By default, the '--events' flag is passed to mysqldump. This may break older versions of mysqldump (prior to version 5.1, IIRC), so you can disable this flag with the 'noevents' parameter.
+
+```
+[client]
+host=specific.host.database.com
+...
+noevents=1
+```
+
+The 'security_group' must allow access from the host running mysqldump.
 
 
 Source - PostgreSQL

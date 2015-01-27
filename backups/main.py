@@ -11,6 +11,7 @@ import ConfigParser
 
 import backups.folder
 import backups.mysql
+import backups.rds
 import backups.s3
 import backups.samba
 import backups.smtp
@@ -74,6 +75,10 @@ def main():
             if section[0:6] == 'mysql-':
                 backup_id = section[6:]
                 source = backups.mysql.MySQL(backup_id, config)
+                sources.append(source)
+            if section[0:4] == 'rds-':
+                backup_id = section[4:]
+                source = backups.rds.RDS(backup_id, config)
                 sources.append(source)
             if section[0:13] == 'snapshot-ec2-':
                 backup_id = section[13:]
