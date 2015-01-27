@@ -73,6 +73,7 @@ class RDS:
         logging.debug("Setting security group to %s..." % self.security_group)
         sgroups = [self.security_group]
         dbinstance.modify(security_groups=sgroups, backup_retention_period=0, apply_immediately=True)
+        dbinstance.update()
         while dbinstance.status not in ('available', 'stopped'):
             logging.debug("Waiting for RDS instance (%s)..." % dbinstance.status)
             time.sleep(20)
@@ -83,9 +84,9 @@ class RDS:
         logging.info("Backing up '%s' (%s)..." % (self.name, self.type))
         zipfile = open(zipfilename, 'wb')
         if 'defaults' in dir(self):
-            dumpargs = ['mysqldump', ('--defaults-file=%s' % self.defaults), ('--host=%s' % dbinstance.endpoint)]
+            dumpargs = ['mysqldump', ('--defaults-file=%s' % self.defaults), ('--host=%s' % hostname)]
         else:
-            dumpargs = ['mysqldump', ('--host=%s' % dbinstance.endpoint)]
+            dumpargs = ['mysqldump', ('--host=%s' % hostname)]
         if not 'noevents' in dir(self) or not self.noevents:
             dumpargs.append('--events')
         dumpargs.append(self.dbname)
