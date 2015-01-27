@@ -13,10 +13,10 @@ class Hipchat:
         self.room_id = config.get('hipchat', 'room_id')
         self.notify_on_success = False
         if config.has_option('hipchat', 'notify_on_success'):
-            self.notify_on_success = config.get('hipchat', 'notify_on_success')
+            self.notify_on_success = config.get('hipchat', 'notify_on_success') == 'True'
         self.notify_on_failure = True
         if config.has_option('hipchat', 'notify_on_failure'):
-            self.notify_on_failure = config.get('hipchat', 'notify_on_failure')
+            self.notify_on_failure = config.get('hipchat', 'notify_on_failure') == 'True'
     
     def notify_success(self, name, backuptype, hostname, filename):
         if not self.notify_on_success:
