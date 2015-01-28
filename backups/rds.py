@@ -80,7 +80,10 @@ class RDS:
             dbinstance.update()
         
         # Wait for security group change to take effect (otherwise connect fails)
-        #time.sleep(60)
+        for i in range(6):
+            logging.debug("Waiting a couple of minutes for RDS instance to settle (%s)..." % dbinstance.status)
+            time.sleep(20)
+            dbinstance.update()
         
         # Fire off the mysqldump
         try:
