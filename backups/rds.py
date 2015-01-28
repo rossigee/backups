@@ -17,11 +17,11 @@ class RDS:
         self.type = "RDS"
         config_id = 'rds-%s' % backup_id
         self.dbname = config.get(config_id, 'dbname')
+        self.instancename = config.get(config_id, 'instancename')
         if config.has_option(config_id, 'defaults'):
             self.defaults = config.get(config_id, 'defaults')
         if config.has_option(config_id, 'noevents'):
             self.noevents = config.get(config_id, 'noevents')
-        self.dbname = config.get(config_id, 'dbname')
         if config.has_option(config_id, 'name'):
             self.name = config.get(config_id, 'name')
         if config.has_option(config_id, 'passphrase'):
@@ -42,11 +42,11 @@ class RDS:
             self.instance_class = "db.m1.small"
         
     def dump(self):
-        # Identify the most recent snapshot for the given dbname
+        # Identify the most recent snapshot for the given instancename
         conn = boto.rds.connect_to_region(self.rds_region)
         snapshots = conn.get_all_dbsnapshots()
         suitable = []
-        prefix = "DBSnapshot:rds:%s" % self.dbname
+        prefix = "DBSnapshot:rds:%s" % self.instancename
         for i in snapshots:
             if str(i)[:len(prefix)] == prefix:
                 suitable.append(i)
@@ -57,7 +57,7 @@ class RDS:
         logging.info("Chosen '%s' to restore..." % snapshot_id)
         
         # Restore a copy of the snapshot
-        instance_id = "tmp-%s-%s" % (self.dbname, random.randint(10000, 99999))
+        instance_id = "tmp-%s-%s" % (self.instancename, random.randint(10000, 99999))
         dbinstance = conn.restore_dbinstance_from_dbsnapshot(snapshot_id, instance_id, self.instance_class)
         logging.info("Started RDS instance '%s'..." % instance_id)
         while dbinstance.status not in ('available', 'stopped'):
@@ -79,30 +79,35 @@ class RDS:
             time.sleep(20)
             dbinstance.update()
         
+        # Wait for security group change to take effect (otherwise connect fails)
+        #time.sleep(60)
+        
         # Fire off the mysqldump
-        zipfilename = '%s/%s.sql.gz' % (self.tmpdir, self.id)
-        logging.info("Backing up '%s' (%s)..." % (self.name, self.type))
-        zipfile = open(zipfilename, 'wb')
-        if 'defaults' in dir(self):
-            dumpargs = ['mysqldump', ('--defaults-file=%s' % self.defaults), ('--host=%s' % hostname)]
-        else:
-            dumpargs = ['mysqldump', ('--host=%s' % hostname)]
-        if not 'noevents' in dir(self) or not self.noevents:
-            dumpargs.append('--events')
-        dumpargs.append(self.dbname)
-        dumpproc1 = subprocess.Popen(dumpargs, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        dumpproc2 = subprocess.Popen(['gzip'], stdin=dumpproc1.stdout, stdout=zipfile)
-        dumpproc1.stdout.close()
-        dumpproc1.wait()
-        exitcode = dumpproc1.returncode
-        errmsg = dumpproc1.stderr.read()
-        if exitcode != 0:
-            raise BackupException("Error while dumping: %s" % errmsg)
-        zipfile.close()
+        try:
+            zipfilename = '%s/%s.sql.gz' % (self.tmpdir, self.id)
+            logging.info("Backing up '%s' (%s)..." % (self.name, self.type))
+            zipfile = open(zipfilename, 'wb')
+            if 'defaults' in dir(self):
+                dumpargs = ['mysqldump', ('--defaults-file=%s' % self.defaults), ('--host=%s' % hostname)]
+            else:
+                dumpargs = ['mysqldump', ('--host=%s' % hostname)]
+            if not 'noevents' in dir(self) or not self.noevents:
+                dumpargs.append('--events')
+            dumpargs.append(self.dbname)
+            dumpproc1 = subprocess.Popen(dumpargs, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            dumpproc2 = subprocess.Popen(['gzip'], stdin=dumpproc1.stdout, stdout=zipfile)
+            dumpproc1.stdout.close()
+            dumpproc1.wait()
+            exitcode = dumpproc1.returncode
+            errmsg = dumpproc1.stderr.read()
+            if exitcode != 0:
+                raise BackupException("Error while dumping: %s" % errmsg)
+            zipfile.close()
 
-        # Clear down the temporary RDS instance
-        logging.info("Terminating RDS instance...")
-        dbinstance.stop(skip_final_snapshot=True)
+        finally:
+            # Clear down the temporary RDS instance
+            logging.info("Terminating RDS instance...")
+            dbinstance.stop(skip_final_snapshot=True)
 
         return zipfilename
     

@@ -174,6 +174,7 @@ WARNING: This can take a very long time in many cases.
 [rds-livesupportdb]
 name=Live Company Data
 dbname=livecompanydb
+instancename=livedb1
 passphrase="your-devs-will-know-this"
 region=eu-west-1
 security_group=livedbbackup
