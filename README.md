@@ -370,6 +370,27 @@ notify_on_failure=True
 TODO: Make username and channel configurable. Currently just uses defaults configured in URL.
 
 
+Notification - Flag file
+------------------------
+
+This simply updates a flag file in a specific location if the backup is successful.
+
+```
+[flagfile]
+filename=/backups/gitdata.ok
+```
+
+We use this on our backup agents in conjunction with a simple 'file_age_secs' script running via SNMP. The following line in the 'snmpd.conf' file allows us to poll how long ago the last known successful backup was run.
+
+```
+exec check_git_backups /usr/local/bin/file_age_secs /backups/gitdata.ok
+```
+
+We then configure our monitoring/alerting service, Icinga, to poll this value and alert is if it exceeds a certain time.
+
+(for file_age_secs source see https://gist.github.com/rossigee/44b9287e95068ebb9ae1)
+
+
 Complete Example
 ----------------
 
