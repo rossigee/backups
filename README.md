@@ -355,6 +355,21 @@ notify_on_failure=True
 ```
 
 
+Notification - Slack
+--------------------
+
+You can specify that a notification of success or failure (or just failure) is posted as a Slack channel notification by providing a Slack URL.
+
+```
+[slack]
+url=https://hooks.slack.com/services/Z03JDZYT4/B03JEZGFG/jqWw4Zr5xPuArlZbbUexIaxP
+notify_on_success=False
+notify_on_failure=True
+```
+
+TODO: Make username and channel configurable. Currently just uses defaults configured in URL.
+
+
 Complete Example
 ----------------
 

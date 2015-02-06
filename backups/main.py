@@ -17,6 +17,7 @@ import backups.samba
 import backups.smtp
 import backups.snapshot
 import backups.hipchat
+import backups.slack
 
 from backups.exceptions import BackupException
 
@@ -63,6 +64,9 @@ def main():
                 notifications.append(notification)
             if section == 'hipchat':
                 notification = backups.hipchat.Hipchat(config)
+                notifications.append(notification)
+            if section == 'slack':
+                notification = backups.slack.Slack(config)
                 notifications.append(notification)
         
         # Loop through sections, process those we have sources for
