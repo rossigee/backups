@@ -29,6 +29,7 @@ class Slack:
         }
         data = {
             'username': 'Backup Agent',
+            'icon_emoji': ':+1:',
             'text': "Backup of '%s' (%s) on '%s' was successful [size: %s]." % (name, backuptype, hostname, filesize),
         }
         data = urllib.urlencode({'payload': json.dumps(data)})
@@ -42,6 +43,7 @@ class Slack:
             return
         data = {
             'username': 'Backup Agent',
+            'icon_emoji': ':imp:',
             'text': "Backup of '%s' (%s) on '%s' failed: %s" % (name, backuptype, hostname, str(e)),
         }
         data = urllib.urlencode({'payload': json.dumps(data)})
