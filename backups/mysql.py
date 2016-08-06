@@ -29,11 +29,11 @@ class MySQL:
         else:
             self.tmpdir = "/var/tmp"
         self.hostname = config.get('defaults', 'hostname')
-        
+
     def dump(self):
-        zipfilename = '%s/%s.sql.gz' % (self.tmpdir, self.id)
+        dumpfilename = '%s/%s.sql' % (self.tmpdir, self.id)
         logging.info("Backing up '%s' (%s)..." % (self.name, self.type))
-        zipfile = open(zipfilename, 'wb')
+        dumpfile = open(dumpfilename, 'wb')
         if 'defaults' in dir(self):
             dumpargs = ['mysqldump', '--defaults-file=%s' % self.defaults]
         else:
@@ -41,20 +41,18 @@ class MySQL:
         if not 'noevents' in dir(self) or not self.noevents:
             dumpargs.append('--events')
         dumpargs.append(self.dbname)
-        dumpproc1 = subprocess.Popen(dumpargs, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        dumpproc2 = subprocess.Popen(['gzip'], stdin=dumpproc1.stdout, stdout=zipfile)
+        dumpproc1 = subprocess.Popen(dumpargs, stdout=dumpfile, stderr=subprocess.PIPE)
         dumpproc1.stdout.close()
         dumpproc1.wait()
         exitcode = dumpproc1.returncode
         errmsg = dumpproc1.stderr.read()
         if exitcode != 0:
             raise BackupException("Error while dumping: %s" % errmsg)
-        zipfile.close()
-        return zipfilename
-    
+        dumpfile.close()
+        return dumpfilename
+
     def dump_and_compress(self):
         filename = self.dump()
         encfilename = backups.encrypt.encrypt(filename, self.passphrase)
         os.unlink(filename)
         return encfilename
-
