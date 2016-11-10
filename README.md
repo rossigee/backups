@@ -425,6 +425,3 @@ Credits
 
 Ross Golder <ross@golder.org>
 
-BTC: 1EN5wttKpwi2cdWMeUVQ4Wy15jBJZSBCDn
-
-LTC: LejNzHEmWRZ76CY5Kwhzijjbv3X6Yk3Paw
