@@ -17,10 +17,9 @@ class S3:
             datetime.datetime.now().strftime("%Y-%m-%d"),
             os.path.basename(filename))
         logging.info("Uploading '%s' backup to S3 (%s)..." % (name, s3location))
-        uploadargs = ['s3cmd', 'put', '-rr', '--no-progress', filename, s3location]
+        uploadargs = ['aws', 's3', 'cp', filename, s3location]
         uploadproc = subprocess.Popen(uploadargs, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         exitcode = uploadproc.wait()
         if exitcode != 0:
             errmsg = "%s%s" % (uploadproc.stdout.read(), uploadproc.stderr.read())
             raise BackupException("Error while uploading: %s" % errmsg)
-

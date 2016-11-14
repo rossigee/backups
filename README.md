@@ -276,14 +276,7 @@ You can specify an S3 bucket to back up to.
 bucket=backups-123456789
 ```
 
-The 's3cmd' client gets it's authentication credentials and other configuration from the 'backups' user's '~/.s3cfg' file. This needs to be configured.
-
-```
-# # Assumes you have a 's3cfg' file to hand. If not, create/find one!
-# cp /tmp/example.s3cfg /home/backups/.s3cfg
-# chown backups /home/backups/.s3cfg
-# chmod 400 /home/backups/.s3cfg
-```
+The 'aws' CLI client gets it's authentication credentials and other configuration from the 'backups' user's '~/.aws/config' file. This needs to be configured as per instructions in the AWS CLI documentation.
 
 
 Destination - Swift
@@ -424,4 +417,3 @@ Credits
 -------
 
 Ross Golder <ross@golder.org>
-
