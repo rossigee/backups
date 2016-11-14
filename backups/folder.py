@@ -10,6 +10,7 @@ class Folder(BackupSource):
         self.id = backup_id
         self.name = backup_id
         self.type = "Folder"
+        self.suffix = "tar.gpg"
         config_id = 'folder-%s' % backup_id
         self.path = config.get(config_id, 'path')
         if config.has_option(config_id, 'name'):
