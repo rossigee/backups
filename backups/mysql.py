@@ -47,10 +47,7 @@ class MySQL(BackupSource):
         dumpfilename = '%s/%s.sql' % (self.tmpdir, self.id)
         logging.info("Backing up '%s' (%s)..." % (self.name, self.type))
         dumpfile = open(dumpfilename, 'wb')
-        if 'mysql_host' in dir(self):
-            dumpargs = ['mysqldump', '--defaults-file=%s' % credsfilename]
-        else:
-            dumpargs = ['mysqldump', ]
+        dumpargs = ['mysqldump', '--defaults-file=%s' % credsfilename]
         if not 'noevents' in dir(self) or not self.noevents:
             dumpargs.append('--events')
         dumpargs.append(self.dbname)
