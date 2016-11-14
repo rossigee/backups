@@ -16,14 +16,17 @@ Currently implemented sources are:
 
 Currently implemented destinations are:
 
-* an S3 bucket (s3cmd)
-* a Swift container (swift-client)
-* a Samba share (pysmbc)
+* an S3 bucket (uses aws-cli)
+* a Swift container (uses swift-client)
+* a Samba share (uses pysmbc)
 
 Currently implemented notifications are:
 
-* an e-mail (via SMTP)
+* an e-mail (via smtplib)
 * a HipChat room notification
+* a Slack notification
+* a Telegram notification
+* a simple flag file
 
 Hopefully, it's fairly straightforward to extend or add to the above.
 
@@ -31,7 +34,7 @@ The sources will be used to generate dump files in a temporary working area. By 
 
 Backups will be encrypted with a given passphrase (using GnuPG), and put into a folder on the destination using the following filename pattern...
 
-    /{hostname}/{yyyy-mm-dd}/{dumpfile_id}.{sql|tar}.gz.gpg
+    /{hostname}/{yyyy-mm-dd}/{dumpfile_id}.{sql|tar}.gpg
 
 There is currently no provision for automatic housekeeping. For now, I manually remove older backups from time to time, leaving one or two for those moments that may require a tardis.
 
