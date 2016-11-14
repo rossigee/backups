@@ -1,12 +1,11 @@
-import backups.encrypt
-
 import os, os.path
 import subprocess
 import logging
 
 from backups.exceptions import BackupException
+from backups.source import BackupSource
 
-class Folder:
+class Folder(BackupSource):
     def __init__(self, backup_id, config):
         self.id = backup_id
         self.name = backup_id
@@ -27,7 +26,7 @@ class Folder:
         for k, v in config.items(config_id):
             if k == 'exclude':
                 self.excludes.append(v)
-        
+
     def dump(self):
         zipfilename = '%s/%s.tar.gz' % (self.tmpdir, self.id)
         logging.info("Backing up '%s' (%s)..." % (self.name, self.type))
@@ -45,10 +44,3 @@ class Folder:
             raise BackupException("Error while dumping: %s" % errmsg)
         zipfile.close()
         return zipfilename
-    
-    def dump_and_compress(self):
-        filename = self.dump()
-        encfilename = backups.encrypt.encrypt(filename, self.passphrase)
-        os.unlink(filename)
-        return encfilename
-

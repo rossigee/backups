@@ -1,5 +1,3 @@
-import backups.encrypt
-
 import os, os.path
 import subprocess
 import logging
@@ -9,8 +7,9 @@ import time
 import boto.rds
 
 from backups.exceptions import BackupException
+from backups.source import BackupSource
 
-class RDS:
+class RDS(BackupSource):
     def __init__(self, backup_id, config):
         self.id = backup_id
         self.name = backup_id

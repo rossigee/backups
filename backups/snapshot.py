@@ -1,5 +1,3 @@
-import backups.encrypt
-
 import os, os.path
 import subprocess
 import boto.rds
@@ -9,8 +7,9 @@ import datetime
 import json
 
 from backups.exceptions import BackupException
+from backups.source import BackupSource
 
-class Snapshot:
+class Snapshot(BackupSource):
     def __init__(self, backup_id, config):
         self.id = backup_id
         self.name = backup_id
@@ -42,7 +41,7 @@ class Snapshot:
         }))
         statfile.close()
         return statfilename
-    
+
     def dump_and_compress(self):
         return self.dump()
 
@@ -73,4 +72,3 @@ class EC2Snapshot(Snapshot):
             aws_access_key_id=self.aws_key,
             aws_secret_access_key=self.aws_secret)
         return ec2conn.create_snapshot(self.vol, "%s (%s)" % (self.name, self.datestr))
-

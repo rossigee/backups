@@ -1,12 +1,11 @@
-import backups.encrypt
-
 import os, os.path
 import subprocess
 import logging
 
 from backups.exceptions import BackupException
+from backups.source import BackupSource
 
-class MySQL:
+class MySQL(BackupSource):
     def __init__(self, backup_id, config):
         self.id = backup_id
         self.name = backup_id
@@ -67,9 +66,3 @@ class MySQL:
         os.unlink(credsfilename)
 
         return dumpfilename
-
-    def dump_and_compress(self):
-        filename = self.dump()
-        encfilename = backups.encrypt.encrypt(filename, self.passphrase)
-        os.unlink(filename)
-        return encfilename
