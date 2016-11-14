@@ -8,12 +8,6 @@ except:
 
 from backups.exceptions import BackupException
 
-def sizeof_fmt(num):
-    for x in ['bytes','KB','MB','GB','TB']:
-        if num < 1024.0:
-            return "%3.1f %s" % (num, x)
-        num /= 1024.0
-
 class SMTP:
     def __init__(self, config):
         self.host = "127.0.0.1"
@@ -31,7 +25,7 @@ class SMTP:
         except:
             self.use_tls = False
         try:
-            self.use_ssl = int(config.get('smtp', 'use_ssl')) == 1 
+            self.use_ssl = int(config.get('smtp', 'use_ssl')) == 1
         except:
             self.use_ssl = False
         if config.has_option('smtp', 'success_to'):
@@ -39,10 +33,10 @@ class SMTP:
         if config.has_option('smtp', 'failure_to'):
             self.failure_to = config.get('smtp', 'failure_to')
 
-    def notify_success(self, name, backuptype, hostname, filename):
+    def notify_success(self, name, backuptype, hostname, filename, stats):
         if 'success_to' not in dir(self) or not self.success_to:
             return
-        filesize = sizeof_fmt(os.path.getsize(filename))
+        filesize = stats.getSizeDescription()
         fromaddr = self.success_to
         toaddrs = [fromaddr]
         msg = MIMEText("Successfully backed up %s (%s) [size: %s]" % (name, backuptype, filesize))
@@ -86,4 +80,3 @@ class SMTP:
             server.login(self.username, self.password)
         server.sendmail(fromaddr, toaddrs, str(msg))
         server.quit()
-

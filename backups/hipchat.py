@@ -1,12 +1,6 @@
 import urllib, urllib2
 import os, os.path
 
-def sizeof_fmt(num):
-    for x in ['bytes','KB','MB','GB','TB']:
-        if num < 1024.0:
-            return "%3.1f %s" % (num, x)
-        num /= 1024.0
-
 class Hipchat:
     def __init__(self, config):
         self.auth_token = config.get('hipchat', 'auth_token')
@@ -17,11 +11,11 @@ class Hipchat:
         self.notify_on_failure = True
         if config.has_option('hipchat', 'notify_on_failure'):
             self.notify_on_failure = config.get('hipchat', 'notify_on_failure') == 'True'
-    
-    def notify_success(self, name, backuptype, hostname, filename):
+
+    def notify_success(self, name, backuptype, hostname, filename, stats):
         if not self.notify_on_success:
             return
-        filesize = sizeof_fmt(os.path.getsize(filename))
+        filesize = stats.getSizeDescription()
         data = {
             'room_id': self.room_id,
             'from': 'Backup Agent',
@@ -34,7 +28,7 @@ class Hipchat:
         hipchaturl = "https://api.hipchat.com/v1/rooms/message?%s" % urllib.urlencode(data)
         f = urllib2.urlopen(hipchaturl)
         response = f.read()
-    
+
     def notify_failure(self, name, backuptype, hostname, e):
         if not self.notify_on_failure:
             return
@@ -50,4 +44,3 @@ class Hipchat:
         hipchaturl = "https://api.hipchat.com/v1/rooms/message?%s" % urllib.urlencode(data)
         f = urllib2.urlopen(hipchaturl)
         response = f.read()
-

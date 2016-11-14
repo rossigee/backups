@@ -3,6 +3,7 @@
 import os
 import os.path
 import sys
+import time
 import argparse
 import getpass
 import logging
@@ -19,24 +20,11 @@ import backups.snapshot
 import backups.hipchat
 import backups.slack
 import backups.flagfile
+import backups.stats
 
 from backups.exceptions import BackupException
 
 RUN_AS_USER=os.getenv('BACKUP_RUN_AS_USER', 'backups')
-
-class BackupRunStatistics:
-    def __init__(self):
-        # Final size of dump file
-        self.size = None
-
-        # How long the dump (and encrypt) took in seconds
-        self.dumptime = None
-
-        # How long the upload to storage took in seconds
-        self.uploadtime = None
-
-        # If known, how many retained backups for this job now (inc this one)
-        self.retained_backups = None
 
 class BackupRunInstance:
     def __init__(self):
@@ -45,22 +33,29 @@ class BackupRunInstance:
         self.sources = []
         self.destinations = []
 
-        self.stats = BackupRunStatistics()
+        self.stats = backups.stats.BackupRunStatistics()
 
     def run(self):
         # Loop through the defined sources...
         for source in self.sources:
             try:
                 # Dump and compress
+                starttime = time.time()
                 dumpfile = source.dump_and_compress()
+                endtime = time.time()
+                self.stats.dumptime = endtime - starttime
+                self.stats.size = os.path.getsize(dumpfile)
 
                 # Send to each listed destination
+                starttime = time.time()
                 for destination in self.destinations:
                     destination.send(dumpfile, source.name)
+                endtime = time.time()
+                self.stats.uploadtime = endtime - starttime
 
                 # Trigger success notifications as required
                 for notification in self.notifications:
-                    notification.notify_success(source.name, source.type, self.hostname, dumpfile)
+                    notification.notify_success(source.name, source.type, self.hostname, dumpfile, self.stats)
 
             except Exception as e:
                 # Trigger notifications as required
