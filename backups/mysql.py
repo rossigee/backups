@@ -12,9 +12,10 @@ class MySQL:
         self.name = backup_id
         self.type = "MySQL"
         config_id = 'mysql-%s' % backup_id
+        self.dbhost = config.get(config_id, 'dbhost')
         self.dbname = config.get(config_id, 'dbname')
-        if config.has_option(config_id, 'defaults'):
-            self.defaults = config.get(config_id, 'defaults')
+        self.dbuser = config.get(config_id, 'dbuser')
+        self.dbpass = config.get(config_id, 'dbpass')
         if config.has_option(config_id, 'noevents'):
             self.noevents = config.get(config_id, 'noevents')
         self.dbname = config.get(config_id, 'dbname')
@@ -31,24 +32,40 @@ class MySQL:
         self.hostname = config.get('defaults', 'hostname')
 
     def dump(self):
+        credsfilename = '%s/%s.my.cnf' % (self.tmpdir, self.id)
+        credsfile = open(credsfilename, 'wb')
+        credsfile.write(
+            "[client]\n" \
+            "host=%s\n" \
+            "user=%s\n" \
+            "pass=%s\n\n" % \
+            (self.dbhost, self.dbuser, self.dbpass)
+        )
+        credsfile.flush()
+        credsfile.close()
+
         dumpfilename = '%s/%s.sql' % (self.tmpdir, self.id)
         logging.info("Backing up '%s' (%s)..." % (self.name, self.type))
         dumpfile = open(dumpfilename, 'wb')
-        if 'defaults' in dir(self):
-            dumpargs = ['mysqldump', '--defaults-file=%s' % self.defaults]
+        if 'mysql_host' in dir(self):
+            dumpargs = ['mysqldump', '--defaults-file=%s' % credsfilename]
         else:
             dumpargs = ['mysqldump', ]
         if not 'noevents' in dir(self) or not self.noevents:
             dumpargs.append('--events')
         dumpargs.append(self.dbname)
         dumpproc1 = subprocess.Popen(dumpargs, stdout=dumpfile, stderr=subprocess.PIPE)
-        dumpproc1.stdout.close()
+        if  dumpproc1.stdout:
+            dumpproc1.stdout.close()
         dumpproc1.wait()
         exitcode = dumpproc1.returncode
         errmsg = dumpproc1.stderr.read()
         if exitcode != 0:
             raise BackupException("Error while dumping: %s" % errmsg)
         dumpfile.close()
+
+        os.unlink(credsfilename)
+
         return dumpfilename
 
     def dump_and_compress(self):

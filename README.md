@@ -125,31 +125,14 @@ You can specify one of more mySQL databases to be backed up.
 ```
 [mysql-livesupportdb]
 name=Live Company Data
+dbhost=localhost
 dbname=livecompanydb
+dbuser=backups
+dbpass=zzzuserwithreadonlyperms
 passphrase="your-devs-will-know-this"
 ```
 
-The 'mysqlclient' gets it's host, username and password from the 'backups' user's '~/.my.cnf' file. This need to be configured:
-
-```
-# cat >/home/backups/.my.cnf <<EOF
-[client]
-host=typically.localhost
-user=backups
-password=mybackuppassword
-EOF
-# chown backups /home/backups/.my.cnf
-# chmod 400 /home/backups/.my.cnf
-```
-
-You can specify an alternative, per-source MySQL 'defaults' file, containing individual credentials for each one, using the 'defaults' parameter. This parameter is used for the '--defaults-file' argument to mysqldump.
-
-```
-[client]
-host=specific.host.database.com
-...
-defaults=/etc/backups/mysql-specific.conf
-```
+The 'mysqlclient' creates a temporary credentials file using the given details.
 
 By default, the '--events' flag is passed to mysqldump. This may break older versions of mysqldump (prior to version 5.1, IIRC), so you can disable this flag with the 'noevents' parameter.
 
@@ -173,7 +156,10 @@ WARNING: This can take a very long time in many cases.
 ```
 [rds-livesupportdb]
 name=Live Company Data
+dbhost=localhost
 dbname=livecompanydb
+dbuser=backups
+dbpass=zzzuserwithreadonlyperms
 instancename=livedb1
 passphrase="your-devs-will-know-this"
 region=eu-west-1
