@@ -24,6 +24,56 @@ from backups.exceptions import BackupException
 
 RUN_AS_USER=os.getenv('BACKUP_RUN_AS_USER', 'backups')
 
+class BackupRunStatistics:
+    def __init__(self):
+        # Final size of dump file
+        self.size = None
+
+        # How long the dump (and encrypt) took in seconds
+        self.dumptime = None
+
+        # How long the upload to storage took in seconds
+        self.uploadtime = None
+
+        # If known, how many retained backups for this job now (inc this one)
+        self.retained_backups = None
+
+class BackupRunInstance:
+    def __init__(self):
+        self.hostname = 'localhost'
+        self.notifications = []
+        self.sources = []
+        self.destinations = []
+
+        self.stats = BackupRunStatistics()
+
+    def run(self):
+        # Loop through the defined sources...
+        for source in self.sources:
+            try:
+                # Dump and compress
+                dumpfile = source.dump_and_compress()
+
+                # Send to each listed destination
+                for destination in self.destinations:
+                    destination.send(dumpfile, source.name)
+
+                # Trigger success notifications as required
+                for notification in self.notifications:
+                    notification.notify_success(source.name, source.type, self.hostname, dumpfile)
+
+            except Exception as e:
+                # Trigger notifications as required
+                for notification in self.notifications:
+                    notification.notify_failure(source.name, source.type, self.hostname, e)
+
+            finally:
+                # Done with the dump file now
+                if 'dumpfile' in locals() and os.path.isfile(dumpfile):
+                   os.unlink(dumpfile)
+
+        logging.debug("Complete.")
+
 def main():
     try:
         # User check
@@ -47,7 +97,6 @@ def main():
 
         # Create an instance, configure and run it
         defaults = config.items('defaults')
-        hostname = config.get('defaults', 'hostname')
 
         # Instantiate handlers for any listed destinations
         destinations = []
@@ -102,31 +151,12 @@ def main():
         if len(sources) < 1:
             raise BackupException("No sources listed in configuration file.")
 
-        # Loop through the defined sources...
-        for source in sources:
-            try:
-                # Dump and compress
-                dumpfile = source.dump_and_compress()
-
-                # Send to each listed destination
-                for destination in destinations:
-                    destination.send(dumpfile, source.name)
-
-                # Trigger success notifications as required
-                for notification in notifications:
-                    notification.notify_success(source.name, source.type, hostname, dumpfile)
-
-            except Exception as e:
-                # Trigger notifications as required
-                for notification in notifications:
-                    notification.notify_failure(source.name, source.type, hostname, e)
-
-            finally:
-                # Done with the dump file now
-                if 'dumpfile' in locals() and os.path.isfile(dumpfile):
-                   os.unlink(dumpfile)
-
-        logging.debug("Complete.")
+        instance = BackupRunInstance()
+        instance.hostname = config.get('defaults', 'hostname')
+        instance.notifications = notifications
+        instance.sources = sources
+        instance.destinations = destinations
+        instance.run()
 
     except KeyboardInterrupt :
         sys.exit()
