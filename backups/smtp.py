@@ -43,8 +43,8 @@ class SMTP(BackupNotification):
         toaddrs = [fromaddr]
         msg = MIMEText("Successfully backed up %s (%s) [size: %s]" % (source.name, source.type, filesize))
         msg['Subject'] = "Backup of %s (%s) on %s was successful" % (source.name, source.type, hostname)
-        msg['X-Backup-Name'] = hostname
-        msg['X-Backup-Type'] = backuptype
+        msg['X-Backup-Id'] = source.id
+        msg['X-Backup-Type'] = source.type
         msg['X-Backup-Hostname'] = hostname
         if self.use_ssl:
             server = smtplib.SMTP_SSL(self.host, self.port)
@@ -67,8 +67,8 @@ class SMTP(BackupNotification):
         toaddrs = [fromaddr]
         msg = MIMEText("Error encountered while backing up %s (%s):\n\n%s" % (source.name, source.type, str(e)))
         msg['Subject'] = "ERROR: Backup of %s (%s) on %s failed" % (source.name, source.type, hostname)
-        msg['X-Backup-Name'] = hostname
-        msg['X-Backup-Type'] = backuptype
+        msg['X-Backup-Id'] = source.id
+        msg['X-Backup-Type'] = source.type
         msg['X-Backup-Hostname'] = hostname
         if self.use_ssl:
             server = smtplib.SMTP_SSL(self.host, self.port)

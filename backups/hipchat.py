@@ -28,7 +28,7 @@ class Hipchat(BackupNotification):
         data = {
             'room_id': self.room_id,
             'from': 'Backup Agent',
-            'message': "Backup of '%s' (%s) on '%s' failed: %s" % (source.name, source.backuptype, hostname, str(e)),
+            'message': "Backup of '%s' (%s) on '%s' failed: %s" % (source.name, source.type, hostname, str(e)),
             'message_format': 'text',
             'notify': 1,
             'color': 'red',
