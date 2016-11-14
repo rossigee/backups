@@ -402,6 +402,18 @@ We then configure our monitoring/alerting service, Icinga, to poll this value an
 (for file_age_secs source see https://gist.github.com/rossigee/44b9287e95068ebb9ae1)
 
 
+Notification - Prometheus
+-------------------------
+
+Pushes a few statistics regarding the backup to a Prometheus push gateway.
+
+```
+[prometheus]
+url=http://pushgw:9091/
+
+```
+
+
 Complete Example
 ----------------
 

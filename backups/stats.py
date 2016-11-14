@@ -10,7 +10,7 @@ class BackupRunStatistics:
         self.uploadtime = None
 
         # If known, how many retained backups for this job now (inc this one)
-        self.retained_backups = None
+        self.retained_copies = None
 
     def getSizeDescription(self):
         num = self.size

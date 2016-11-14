@@ -68,14 +68,18 @@ class S3(BackupDestination):
 
         # Loop and purge unretainable copies
         removable_names = []
-        if self.retention_copies > 0 and len(names) > self.retention_copies:
+        if self.retention_copies > 0:
             names = [name for d, name in candidates]
-            removable_names = names[0:(len(names) - self.retention_copies)]
+            if len(names) > self.retention_copies:
+                removable_names = names[0:(len(names) - self.retention_copies)]
         if self.retention_days > 0:
             for d, name in candidates:
                 days = (d - timedate.timedate.now()).days
                 if days > self.retention_days:
                     removable_names.append(name)
         for name in removable_names:
-            logging.info("Removing ''%s'..." % name)
+            logging.info("Removing '%s'..." % name)
             bucket.get_key(name).delete()
+
+        # Return number of copies left
+        stats.retained_copies = len(candidates) - len(removable_names)

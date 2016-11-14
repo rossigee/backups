@@ -20,6 +20,7 @@ import backups.snapshot
 import backups.hipchat
 import backups.slack
 import backups.telegram
+import backups.prometheus
 import backups.flagfile
 import backups.stats
 
@@ -39,6 +40,10 @@ class BackupRunInstance:
     def run(self):
         # Loop through the defined sources...
         for source in self.sources:
+            # Trigger notifications as required
+            for notification in self.notifications:
+                notification._notify_start(source, self.hostname)
+
             try:
                 # Dump and compress
                 starttime = time.time()
@@ -57,12 +62,12 @@ class BackupRunInstance:
 
                 # Trigger success notifications as required
                 for notification in self.notifications:
-                    notification.notify_success(source.name, source.type, self.hostname, dumpfile, self.stats)
+                    notification._notify_success(source, self.hostname, dumpfile, self.stats)
 
             except Exception as e:
                 # Trigger notifications as required
                 for notification in self.notifications:
-                    notification.notify_failure(source.name, source.type, self.hostname, e)
+                    notification._notify_failure(source, self.hostname, e)
 
             finally:
                 # Done with the dump file now
@@ -126,6 +131,9 @@ def main():
                 notifications.append(notification)
             if section == 'telegram':
                 notification = backups.telegram.Telegram(config)
+                notifications.append(notification)
+            if section == 'prometheus':
+                notification = backups.prometheus.Prometheus(config)
                 notifications.append(notification)
             if section == 'flagfile':
                 notification = backups.flagfile.Flagfile(config)
