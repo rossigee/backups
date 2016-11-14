@@ -22,11 +22,13 @@ import backups.flagfile
 
 from backups.exceptions import BackupException
 
+RUN_AS_USER=os.getenv('BACKUP_RUN_AS_USER', 'backups')
+
 def main():
     try:
         # User check
-        if getpass.getuser() != 'backups':
-            sys.exit("ERROR: Not running as 'backups' user.")
+        if getpass.getuser() != RUN_AS_USER:
+            sys.exit("ERROR: Must be run as '%s' user." % RUN_AS_USER)
 
         # Make doubly sure temp files aren't world-viewable
         os.umask(077)
@@ -38,15 +40,15 @@ def main():
         parser.add_argument('-v', dest='verbose', action='store_true')
         args = parser.parse_args()
         configfile = args.configfile[0]
-        
+
         # Read our configuration file
         config = ConfigParser.RawConfigParser()
         config.read(configfile)
-        
+
         # Create an instance, configure and run it
         defaults = config.items('defaults')
         hostname = config.get('defaults', 'hostname')
-        
+
         # Instantiate handlers for any listed destinations
         destinations = []
         for section in config.sections():
@@ -56,7 +58,7 @@ def main():
             if section == 'samba':
                 destination = backups.samba.Samba(config)
                 destinations.append(destination)
-        
+
         # Instantiate handlers for any listed notifications
         notifications = []
         for section in config.sections():
@@ -72,7 +74,7 @@ def main():
             if section == 'flagfile':
                 notification = backups.flagfile.Flagfile(config)
                 notifications.append(notification)
-        
+
         # Loop through sections, process those we have sources for
         sources = []
         for section in config.sections():
@@ -96,20 +98,20 @@ def main():
                 backup_id = section[13:]
                 source = backups.snapshot.RDSSnapshot(backup_id, config)
                 sources.append(source)
-        
+
         if len(sources) < 1:
             raise BackupException("No sources listed in configuration file.")
-        
+
         # Loop through the defined sources...
         for source in sources:
             try:
                 # Dump and compress
                 dumpfile = source.dump_and_compress()
-                
+
                 # Send to each listed destination
                 for destination in destinations:
                     destination.send(dumpfile, source.name)
-                
+
                 # Trigger success notifications as required
                 for notification in notifications:
                     notification.notify_success(source.name, source.type, hostname, dumpfile)
@@ -123,7 +125,7 @@ def main():
                 # Done with the dump file now
                 if 'dumpfile' in locals() and os.path.isfile(dumpfile):
                    os.unlink(dumpfile)
-        
+
         logging.debug("Complete.")
 
     except KeyboardInterrupt :
@@ -131,4 +133,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-
