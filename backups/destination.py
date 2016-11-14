@@ -1,0 +1,3 @@
+# Abstract
+class BackupDestination:
+  pass

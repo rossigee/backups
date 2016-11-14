@@ -267,6 +267,21 @@ bucket=backups-123456789
 
 The 'aws' CLI client gets it's authentication credentials and other configuration from the 'backups' user's '~/.aws/config' file. This needs to be configured as per instructions in the AWS CLI documentation.
 
+Additionally, the S3 destination provides some simple backup rotation options.
+
+```
+[s3-backups]
+bucket=backups-123456789
+prefix=gnucash
+availability_zone=eu-west-1
+aws_access_key_id=AKIAJPG7RJVVKWT3UX3A
+aws_secret_access_key=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
+retention_copies=10
+#retention_days=90
+```
+
+After a successful backup, the backup files are listed and the 'retention_copies' and 'retention_days' options, if present, are applied to identify and remove any backups that are no longer required.
+
 
 Destination - Swift
 -------------------

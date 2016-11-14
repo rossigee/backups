@@ -50,7 +50,8 @@ class BackupRunInstance:
                 # Send to each listed destination
                 starttime = time.time()
                 for destination in self.destinations:
-                    destination.send(dumpfile, source.name)
+                    destination.send(source.id, source.name, source.suffix, dumpfile)
+                    destination.cleanup(source.id, source.name, source.suffix, self.stats)
                 endtime = time.time()
                 self.stats.uploadtime = endtime - starttime
 
@@ -84,8 +85,15 @@ def main():
         parser.add_argument('configfile', metavar='configfile', nargs=1,
                    help='name of configuration file to use for this run')
         parser.add_argument('-v', dest='verbose', action='store_true')
+        parser.add_argument('-d', dest='debug', action='store_true')
         args = parser.parse_args()
         configfile = args.configfile[0]
+
+        # Enable logging if verbosity requested
+        if args.debug:
+            logging.basicConfig(level=logging.DEBUG)
+        elif args.verbose:
+            logging.basicConfig(level=logging.INFO)
 
         # Read our configuration file
         config = ConfigParser.RawConfigParser()

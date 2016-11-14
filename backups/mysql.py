@@ -10,6 +10,7 @@ class MySQL(BackupSource):
         self.id = backup_id
         self.name = backup_id
         self.type = "MySQL"
+        self.suffix = "sql.gpg"
         config_id = 'mysql-%s' % backup_id
         self.dbhost = config.get(config_id, 'dbhost')
         self.dbname = config.get(config_id, 'dbname')
