@@ -349,6 +349,20 @@ notify_on_failure=True
 TODO: Make username and channel configurable. Currently just uses defaults configured in URL.
 
 
+Notification - Telegram
+--------------------
+
+You can specify that a notification of success or failure (or just failure) is posted as Telegram message by providing an API token and chat id.
+
+```
+[telegram]
+api_token=295432120:use_your_own_token_here
+chat_id=38123456
+notify_on_success=True
+notify_on_false=True
+```
+
+
 Notification - Flag file
 ------------------------
 

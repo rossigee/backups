@@ -19,6 +19,7 @@ import backups.smtp
 import backups.snapshot
 import backups.hipchat
 import backups.slack
+import backups.telegram
 import backups.flagfile
 import backups.stats
 
@@ -114,6 +115,9 @@ def main():
                 notifications.append(notification)
             if section == 'slack':
                 notification = backups.slack.Slack(config)
+                notifications.append(notification)
+            if section == 'telegram':
+                notification = backups.telegram.Telegram(config)
                 notifications.append(notification)
             if section == 'flagfile':
                 notification = backups.flagfile.Flagfile(config)
