@@ -410,9 +410,12 @@ Pushes a few statistics regarding the backup to a Prometheus push gateway.
 ```
 [prometheus]
 url=http://pushgw:9091/
+username=prometheus
+password=yourpasswordhere
 
 ```
 
+The authentication parameters 'username' and 'password' are optional.
 
 Complete Example
 ----------------
