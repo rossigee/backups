@@ -16,19 +16,19 @@ class Folder(BackupSource):
                 self.excludes.append(v)
 
     def dump(self):
-        zipfilename = '%s/%s.tar.gz' % (self.tmpdir, self.id)
+        tarfilename = '%s/%s.tar' % (self.tmpdir, self.id)
         logging.info("Backing up '%s' (%s)..." % (self.name, self.type))
-        zipfile = open(zipfilename, 'wb')
+        tarfile = open(tarfilename, 'wb')
         os.chdir(os.path.dirname(self.path))
-        dumpargs = ['sudo', 'tar', 'cfz', zipfilename, os.path.basename(self.path)]
+        dumpargs = ['sudo', 'tar', 'cf', tarfilename, os.path.basename(self.path)]
         for exclude in self.excludes:
             dumpargs.append('--exclude')
             dumpargs.append(exclude)
-        dumpproc1 = subprocess.Popen(dumpargs, stdout=zipfile, stderr=subprocess.PIPE)
+        dumpproc1 = subprocess.Popen(dumpargs, stdout=tarfile, stderr=subprocess.PIPE)
         dumpproc1.wait()
         exitcode = dumpproc1.returncode
         errmsg = dumpproc1.stderr.read()
         if exitcode != 0:
             raise BackupException("Error while dumping: %s" % errmsg)
-        zipfile.close()
-        return zipfilename
+        tarfile.close()
+        return tarfilename
