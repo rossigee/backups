@@ -6,14 +6,19 @@ from backups.exceptions import BackupException
 def encrypt(filename, passphrase):
     logging.debug("Encrypting '%s'..." % filename)
     encfilename = '%s.gpg' % filename
+    encerrsname = '%s.err' % filename
     encfile = open(encfilename, 'wb')
+    encerrs = open(encerrsname, 'wb')
     encargs = ['gpg', '--batch', '--yes', '-q', '--passphrase-fd', '0', '-c', filename]
-    encproc1 = subprocess.Popen(encargs, stdin=subprocess.PIPE, stdout=encfile, stderr=subprocess.PIPE)
+    encproc1 = subprocess.Popen(encargs, stdin=subprocess.PIPE, stdout=encfile, stderr=encerrs)
     encproc1.communicate(passphrase)
-    exitcode = encproc1.wait()
-    if exitcode != 0:
-        errmsg = encproc1.stderr.read()
-        raise backups.main.BackupException("Error while encrypting: %s" % errmsg)
+    #if encproc1.stdout:
+    #    encproc1.stdout.close()
+    encproc1.wait()
     encfile.close()
+    encerrs.close()
+    exitcode = encproc1.returncode
+    if exitcode != 0:
+        errmsg = open(encerrsname, 'rb').read()
+        raise BackupException("Error while encrypting: %s" % errmsg)
     return encfilename
-
