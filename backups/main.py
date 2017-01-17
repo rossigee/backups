@@ -31,6 +31,8 @@ RUN_AS_USER=os.getenv('BACKUP_RUN_AS_USER', 'backups')
 class BackupRunInstance:
     def __init__(self):
         self.hostname = 'localhost'
+        if 'BACKUPS_HOSTNAME' in os.environ:
+            self.hostname = os.environ['BACKUPS_HOSTNAME']
         self.notifications = []
         self.sources = []
         self.destinations = []
