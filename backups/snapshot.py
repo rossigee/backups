@@ -11,25 +11,22 @@ from backups.source import BackupSource
 
 class Snapshot(BackupSource):
     def __init__(self, backup_id, config):
-        self.id = backup_id
-        self.name = backup_id
-        self.az = config.get(self.config_id, 'availability_zone')
-        self.vol = config.get(self.config_id, 'volume_id')
-        if config.has_option(self.config_id, 'name'):
-            self.name = config.get(self.config_id, 'name')
-        try:
-            self.aws_key = config.get(self.config_id, 'aws_access_key_id')
-        except:
-            self.aws_key = config.get('defaults', 'aws_access_key_id')
-        try:
-            self.aws_secret = config.get(self.config_id, 'aws_secret_access_key')
-        except:
-            self.aws_secret = config.get('defaults', 'aws_secret_access_key')
+        config_id = 'snapshot-%s' % backup_id
+        BackupSource.__init__(self, backup_id, config, config_id, "Snapshot", None)
+        self.vol = config.get(config_id, 'volume_id')
         self.datestr = datetime.datetime.utcnow().strftime("%Y-%m-%d")
-        if config.has_option('defaults', 'tmpdir'):
-            self.tmpdir = config.get('defaults', 'tmpdir')
-        else:
-            self.tmpdir = "/var/tmp"
+        try:
+            self.az = config.get(config_id, 'availability_zone')
+        except:
+            self.az = config.get_or_envvar('defaults', 'availability_zone', 'AWS_AVAILABILITY_ZONE')
+        try:
+            self.aws_key = config.get(config_id, 'aws_access_key_id')
+        except:
+            self.aws_key = config.get_or_envvar('defaults', 'aws_access_key_id', 'AWS_ACCESS_KEY_ID')
+        try:
+            self.aws_secret = config.get('s3', 'aws_secret_access_key')
+        except:
+            self.aws_secret = config.get_or_envvar('defaults', 'aws_secret_access_key', 'AWS_SECRET_ACCESS_KEY')
 
     def dump(self):
         retval = self.snapshot()

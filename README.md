@@ -1,7 +1,7 @@
 Backup scripts
 ==============
 
-At first, there was the shell script. It was good, but then things got complicated. Born from the ensuing chaos and spaghetti was the python package.
+This python script, given a backup configuration, will cycle through a list of backup 'sources', packing them up and encrypting them into a temporary file, which it will upload to each of a list of destinations, finally reporting success or failure via a list of notification handlers.
 
 Overview
 --------
@@ -17,7 +17,6 @@ Currently implemented sources are:
 Currently implemented destinations are:
 
 * an S3 bucket (uses aws-cli)
-* a Swift container (uses swift-client)
 * a Samba share (uses pysmbc)
 
 Currently implemented notifications are:
@@ -27,6 +26,7 @@ Currently implemented notifications are:
 * a Slack notification
 * a Telegram notification
 * a simple flag file
+* a Prometheus push gateway
 
 Hopefully, it's fairly straightforward to extend or add to the above.
 
@@ -36,9 +36,11 @@ Backups will be encrypted with a given passphrase (using GnuPG), and put into a 
 
     /{hostname}/{yyyy-mm-dd}/{dumpfile_id}.{sql|tar}.gpg
 
-There is currently no provision for automatic housekeeping. For now, I manually remove older backups from time to time, leaving one or two for those moments that may require a tardis.
+If the backup configuration specifies a retention policy, then any copies that exist on the backup destination that fall outside that scope are deleted. Typically, a retention policy will specify to keep a copies for a certain number of days, or just a number of the most recent copies.
 
-Also, a word to the wise about scheduling. Backing up large chunks of data can use a lot of resources, and even if set to run after 'work' hours, can often run for on into the morning and indeed the next working day. If you are backing up mission criticial servers over mission critical network connections, you may need to take additional precautions to ensure that your backup scripts are not going to cause knock-on problems. You have been warned.
+Also, a word to the wise about scheduling. Backing up large chunks of data can use a lot of resources, and even if set to run after 'work' hours, can often run for on into the morning and indeed the next working day. Break larger backups down into smaller chunks where possible. If you are backing up mission criticial servers over mission critical network connections, you may need to take additional precautions to ensure that your backup scripts are not going to cause knock-on problems. You have been warned.
+
+For security purposes, the script is designed to run as a non-privileged user. By default, it expects to be run as the 'backups' user, but this can be overridden using the 'RUN_AS_USER' environment variable.
 
 
 Installation
@@ -48,7 +50,7 @@ Installation
 
 1. Create a configuration file listing the folders/databases you want to back up, an encryption passphrase, and one or more places you want the encrypted dump file uploaded to, and details of any notification methods you wish to use. See docs further down for examples. You can install the dependencies now, or you can wait until you get errors later :)
 
-1. Create a 'backups' user, and add a cron job to run the script as you wish. If you need folders to be backed up, you will also need a 'sudoers' directive to allow the backups user to run 'tar' as root to do it's work.
+1. Create a 'backups' user to run the script as. If you need folders to be backed up that require superuser privileges, you will also need a 'sudoers' directive to allow the backups user to run 'tar' as root to do it's work.
 
 ```
 # cat >/etc/sudoers.d/99-backups <<EOF
@@ -62,7 +64,7 @@ EOF
 # sudo -H -u backups /usr/local/bin/backup -v /home/backups/mynightlybackup.cfg
 ```
 
-1. Add it to cron.
+1. Add your job to cron.
 
 ```
 # cat >/etc/cron.d/nightly-backups.conf <<EOF
@@ -76,11 +78,11 @@ You're done.
 Example configuration
 ---------------------
 
-IMPORTANT: This configuration file will contain sensitive information. Be sure to keep it somewhere safe, with suitable permissions.
+IMPORTANT: The configuration file may contain sensitive information. Be sure to keep it somewhere safe, with suitable permissions.
 
-No assumptions are made as to where to store the configuration file. It is specified as a command line argument, so different configurations can be run at different times on the same server, for flexibity. In most cases, there is only one config file per server, and I tend to just use '/etc/backups.cfg'.
+For flexibility, configuration variables are read first from environment variables, and can be overridden by settings in the configuration file provided at runtime. The configuration file location is specified as a command line argument, so different configurations can be run at different times on the same backup server, for different data at different times.
 
-The configuration file needs to contain a common configuration block that defines the bits that are not specific to a particular source, destination or notification.
+The configuration file may contain a 'defaults' block that defines various values that are shared by, or not specific to a particular source, destination or notification. Where specified, these will override the environment variable for that setting.
 
 ```
 [defaults]
@@ -89,11 +91,17 @@ tmpdir=/var/tmp/backups
 passphrase=9a3d2ad085cd1fff0f43501a84e7913d
 ```
 
-The 'host' parameter is used to identify the folder the backup should be stored in on the destination.
+Parameters available in 'defaults':
 
-The 'tmpdir' parameter is somewhere with enough temporary space to contain the compressed backup and it's encrypted copy as it's being built. I find it's best to create a subfolder of /var/tmp that only the 'backups' user has access to.
+| Config key | Environment variable | Purpose |
+|------------|----------------------|---------|
+| hostname | BACKUPS_HOSTNAME | Used to help identify the folder the backup should be stored in on the destination. |
+| tmpdir | BACKUPS_TMPDIR | Somewhere with enough temporary space to contain the compressed backup and it's encrypted copy as it's being built. |
+| passphrase| BACKUPS_PASSPHRASE | Used to encrpyt any backups created. |
 
-The 'passphrase' parameter is used to encrpyt any backups created. It can also be supplied in a source block to provide per-dump encryption passphrases, which may be useful if different dumps will need to be made accessible to different groups of users, such as developers that may need to download a fresh snapshot to use for local testing at various times. Depending on your circumstances, you may prefer the passphrase to be human-rememberable. In my case I don't, so I tend to use long randomly generated strings (i.e. openssl rand -hex 16).
+These values can be overridden in the source configuration blocks.
+
+The rest of the configuration file will consist of blocks defining the various sources, destination and notification handlers.
 
 
 Source - Folder
@@ -105,7 +113,11 @@ You can specify one or more folders to be backed up.
 [folder-accountsdata]
 name=Live Accounts Data
 path=/var/lib/myaccountspkg/data
-passphrase="your-secret-is-safe-with-me"
+
+[folder-devsdata]
+name=Live Development Data
+path=/var/lib/mydevteamfiles/data
+
 ```
 
 You can specify multiple 'exclude' parameters to tell tar which folders/files to exclude too.
@@ -114,10 +126,17 @@ You can specify multiple 'exclude' parameters to tell tar which folders/files to
 [folder-websitedata]
 name=Live Website Data
 path=/var/www/htdocs
-passphrase="your-secret-is-safe-with-me"
 exclude=logs
 exclude=tmp
 ```
+
+Parameters available in 'folder':
+
+| Config key | Environment variable | Purpose |
+|------------|----------------------|---------|
+| name | N/A | Description of data being backed up (for reporting purposes). |
+| path | N/A | Name of file or folder to be backed up. |
+| exclude | N/A | One or more paths to be excluded from the backup |
 
 
 Source - MySQL Database
@@ -135,7 +154,7 @@ dbpass=zzzuserwithreadonlyperms
 passphrase="your-devs-will-know-this"
 ```
 
-The 'mysqlclient' creates a temporary credentials file using the given details.
+The script creates a temporary 'mysqlclient' credentials file using the given details.
 
 By default, the '--events' flag is passed to mysqldump. This may break older versions of mysqldump (prior to version 5.1, IIRC), so you can disable this flag with the 'noevents' parameter.
 
@@ -145,6 +164,18 @@ host=specific.host.database.com
 ...
 noevents=1
 ```
+
+Parameters available in 'mysql':
+
+| Config key | Environment variable | Purpose |
+|------------|----------------------|---------|
+| name | N/A | Description of data being backed up (for reporting purposes). |
+| dbhost | MYSQL_HOST | Name of the mySQL host to connect to. |
+| dbname | N/A | Name of the mySQL database to back up. |
+| dbuser | MYSQL_USER | Username to connect to mySQL as. |
+| dbpass | MYSQL_PASS | Password to connect to mySQL with. |
+| defaults | N/A | The location of an 'mysqlclient' credentials file to use instead of creating a temporary one with using above 'db*' variables. |
+| noevents | N/A | Don't pass the '--events' flag to 'mysqldump'. |
 
 
 Source - RDS Database Snapshots
@@ -164,7 +195,6 @@ dbname=livecompanydb
 dbuser=backups
 dbpass=zzzuserwithreadonlyperms
 instancename=livedb1
-passphrase="your-devs-will-know-this"
 region=eu-west-1
 security_group=livedbbackup
 instance_class=db.m1.small
@@ -217,6 +247,24 @@ noevents=1
 
 The 'security_group' must allow access from the host running mysqldump.
 
+Parameters available in 'rds':
+
+| Config key | Environment variable | Purpose |
+|------------|----------------------|---------|
+| name | N/A | Description of data being backed up (for reporting purposes). |
+| dbhost | MYSQL_HOST | Name of the mySQL host to connect to. |
+| dbname | N/A | Name of the mySQL database to back up. |
+| dbuser | MYSQL_USER | Username to connect to mySQL as. |
+| dbpass | MYSQL_PASS | Password to connect to mySQL with. |
+| defaults | N/A | The location of an 'mysqlclient' credentials file to use instead of creating a temporary one with using above 'db*' variables. |
+| noevents | N/A | Don't pass the '--events' flag to 'mysqldump'. |
+| aws_access_key_id | AWS_ACCESS_KEY_ID | AWS access key |
+| aws_secret_access_key | AWS_SECRET_ACCESS_KEY | AWS secret access key |
+| instancename | N/A | RDS instance name to clone backup of. |
+| region | N/A | AWS hosting region of RDS database. |
+| security_group | N/A | VPC security group for replica to provide access to. |
+| instance_class | N/A | RDS instance class to create replica as (defaults to 'db.m1.small'). |
+
 
 Source - PostgreSQL
 -------------------
@@ -252,7 +300,17 @@ volume_id=vol-81dc59c6
 
 It leaves a temporary file with status details as a 'dumpfile'. This gives the destination plugin something to work with when reporting success.
 
-This source plugin is best used in a configuration on it's own, without a destination specified.
+This source plugin is best used in a configuration on it's own, or with other volume snapshot definitions only, as used with a destination but no payload the configuration wouldn't make much sense!
+
+Parameters available in 'snapshot':
+
+| Config key | Environment variable | Purpose |
+|------------|----------------------|---------|
+| name | N/A | Description of data being backed up (for reporting purposes). |
+| volume_id | N/A | ID of the EBS volume to be snapshotted. |
+| availability_zone | AWS_AVAILABILITY_ZONE | AWS availability zone. |
+| aws_access_key_id | AWS_ACCESS_KEY_ID | AWS access key. |
+| aws_secret_access_key | AWS_SECRET_ACCESS_KEY | AWS secret access key. |
 
 
 Destination - S3
@@ -282,11 +340,14 @@ retention_copies=10
 
 After a successful backup, the backup files are listed and the 'retention_copies' and 'retention_days' options, if present, are applied to identify and remove any backups that are no longer required.
 
+Parameters available in 's3':
 
-Destination - Swift
--------------------
-
-Actually, I lied. I haven't got this working or merged yet. Watch this space.
+| Config key | Environment variable | Purpose |
+|------------|----------------------|---------|
+| bucket | N/A | S3 bucket to dump files to. |
+| availability_zone | AWS_AVAILABILITY_ZONE | AWS availability zone. |
+| aws_access_key_id | AWS_ACCESS_KEY_ID | AWS access key. |
+| aws_secret_access_key | AWS_SECRET_ACCESS_KEY | AWS secret access key. |
 
 
 Destination - Samba
@@ -296,22 +357,24 @@ You can specify a Samba share to back up to.
 
 ```
 [samba-backups]
-host=qnap.mycompany.com
-workgroup=WORKGROUP
+hostname=qnap.mycompany.com
 share=Backups
+username=backups
+password=getyourown
+workgroup=WORKGROUP
 ```
 
-The 'smbclient' client is told to get it's configuration from the 'backups' user's '~/.smb.conf' file. This needs to be configured.
+A temporary authentication credentials file will be created and the 'smbclient' client will be instructed to use it.
 
-```
-# cat >/home/backups/.smbauth <<EOF
-username = backups
-password = getyourown
-domain = WORKGROUP
-EOF
-# chown backups /home/backups/.smbauth
-# chmod 400 /home/backups/.smbauth
-```
+Parameters available in 'samba':
+
+| Config key | Environment variable | Purpose |
+|------------|----------------------|---------|
+| hostname | SMB_HOSTNAME | Samba (DNS) hostname. |
+| share | N/A | Samba share to manage dump files on |
+| username | SMB_USERNAME | Samba username. |
+| password | SMB_PASSWORD | Samba password. |
+| workgroup | SMB_WORKGROUP | Samba domain/workgroup. |
 
 
 Notification - Email
@@ -331,11 +394,18 @@ success_to=archive@mycompany.com
 failure_to=sysadmin@mycompany.com
 ```
 
-The main parameters ('host', 'port', 'user', 'password', 'use_tls' and 'use_ssl') should be fairly self-explanatory. They are optional. If no details are supplied, defaults to 'localhost' port 25.
+Parameters available in 'smtp':
 
-The 'success_to' parameter is optional. Success notification will only be sent if it's supplied.
-
-The 'failure_to' parameter is too, but then if you didn't supply it, how would you know if it worked or not?!
+| Config key | Environment variable | Purpose |
+|------------|----------------------|---------|
+| host | SMTP_HOST | SMTP hostname. |
+| port | SMTP_PORT | SMTP port. |
+| username | SMTP_USERNAME | SMTP username. |
+| password | SMTP_PASSWORD | SMTP password. |
+| use_tls | SMTP_USE_TLS | If using STARTTLS, '1'. |
+| use_ssl | SMTP_USE_SSL | If using plain SSL, '1'. |
+| success_to | SMTP_SUCCESS_TO | If set, success notification will be sent to the address specified. If not set, success notification will not be sent. |
+| failure_to | SMTP_FAILURE_TO | If set, failure notification will be sent to the address specified. If not set, failure notification will not be sent. |
 
 
 Notification - HipChat
@@ -351,6 +421,13 @@ notify_on_success=False
 notify_on_failure=True
 ```
 
+Parameters available in 'hipchat':
+
+| Config key | Environment variable | Purpose |
+|------------|----------------------|---------|
+| auth_token | HIPCHAT_AUTH_TOKEN | Hipchat auth token. |
+| room_id | HIPCHAT_ROOM_ID | Hipchat room id. |
+
 
 Notification - Slack
 --------------------
@@ -364,7 +441,11 @@ notify_on_success=False
 notify_on_failure=True
 ```
 
-TODO: Make username and channel configurable. Currently just uses defaults configured in URL.
+Parameters available in 'slack':
+
+| Config key | Environment variable | Purpose |
+|------------|----------------------|---------|
+| url | SLACK_URL | Slack integration URL. |
 
 
 Notification - Telegram
@@ -379,6 +460,13 @@ chat_id=38123456
 notify_on_success=True
 notify_on_false=True
 ```
+
+Parameters available in 'telegram':
+
+| Config key | Environment variable | Purpose |
+|------------|----------------------|---------|
+| api_token | TELEGRAM_API_TOKEN | Telegram API token |
+| chat_id | TELEGRAM_CHAT_ID | Telegram Chat ID |
 
 
 Notification - Flag file
@@ -401,6 +489,12 @@ We then configure our monitoring/alerting service, Icinga, to poll this value an
 
 (for file_age_secs source see https://gist.github.com/rossigee/44b9287e95068ebb9ae1)
 
+Parameters available in 'flagfile':
+
+| Config key | Environment variable | Purpose |
+|------------|----------------------|---------|
+| filename | N/A | Filename for file to create on successful backup completion. |
+
 
 Notification - Prometheus
 -------------------------
@@ -415,7 +509,15 @@ password=yourpasswordhere
 
 ```
 
-The authentication parameters 'username' and 'password' are optional.
+If the 'username and 'password' parameters are set, they are used to create the HTTP Basic Auth header for the connection.
+
+Parameters available in 'prometheus':
+
+| Config key | Environment variable | Purpose |
+|------------|----------------------|---------|
+| url | PUSHGW_URL | URL of Prometheus push gateway (not inc '/metrics' part). |
+| username | PUSHGW_USERNAME | Push gateway auth username. |
+| password | PUSHGW_PASSWORD | Push gateway auth password. |
 
 Complete Example
 ----------------

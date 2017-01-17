@@ -7,22 +7,9 @@ from backups.source import BackupSource
 
 class Folder(BackupSource):
     def __init__(self, backup_id, config):
-        self.id = backup_id
-        self.name = backup_id
-        self.type = "Folder"
-        self.suffix = "tar.gpg"
         config_id = 'folder-%s' % backup_id
+        BackupSource.__init__(self, backup_id, config, config_id, "Folder", "tar.gpg")
         self.path = config.get(config_id, 'path')
-        if config.has_option(config_id, 'name'):
-            self.name = config.get(config_id, 'name')
-        if config.has_option(config_id, 'passphrase'):
-            self.passphrase = config.get(config_id, 'passphrase')
-        else:
-            self.passphrase = config.get('defaults', 'passphrase')
-        if config.has_option('defaults', 'tmpdir'):
-            self.tmpdir = config.get('defaults', 'tmpdir')
-        else:
-            self.tmpdir = "/var/tmp"
         self.excludes = []
         for k, v in config.items(config_id):
             if k == 'exclude':

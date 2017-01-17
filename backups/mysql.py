@@ -7,60 +7,67 @@ from backups.source import BackupSource
 
 class MySQL(BackupSource):
     def __init__(self, backup_id, config):
-        self.id = backup_id
-        self.name = backup_id
-        self.type = "MySQL"
-        self.suffix = "sql.gpg"
         config_id = 'mysql-%s' % backup_id
-        self.dbhost = config.get(config_id, 'dbhost')
+        BackupSource.__init__(self, backup_id, config, config_id, "MySQL", "sql.gpg")
+        self.__common_init__(backup_id, config, config_id)
+
+    def __common_init__(self, backup_id, config, config_id):
+        try:
+            self.dbhost = config.get(config_id, 'dbhost')
+        except:
+            self.dbhost = config.get_or_envvar(config_id, 'dbhost', 'MYSQL_HOST')
+        try:
+            self.dbuser = config.get(config_id, 'dbuser')
+        except:
+            self.dbuser = config.get_or_envvar(config_id, 'dbuser', 'MYSQL_USER')
+        try:
+            self.dbpass = config.get(config_id, 'dbpass')
+        except:
+            self.dbpass = config.get_or_envvar(config_id, 'dbpass', 'MYSQL_PASS')
         self.dbname = config.get(config_id, 'dbname')
-        self.dbuser = config.get(config_id, 'dbuser')
-        self.dbpass = config.get(config_id, 'dbpass')
+        if config.has_option(config_id, 'defaults'):
+            self.defaults = config.get(config_id, 'defaults')
         if config.has_option(config_id, 'noevents'):
             self.noevents = config.get(config_id, 'noevents')
-        self.dbname = config.get(config_id, 'dbname')
-        if config.has_option(config_id, 'name'):
-            self.name = config.get(config_id, 'name')
-        if config.has_option(config_id, 'passphrase'):
-            self.passphrase = config.get(config_id, 'passphrase')
-        else:
-            self.passphrase = config.get('defaults', 'passphrase')
-        if config.has_option('defaults', 'tmpdir'):
-            self.tmpdir = config.get('defaults', 'tmpdir')
-        else:
-            self.tmpdir = "/var/tmp"
-        self.hostname = config.get('defaults', 'hostname')
+        self.hostname = config.get_or_envvar('defaults', 'hostname', 'BACKUPS_HOSTNAME')
 
     def dump(self):
-        credsfilename = '%s/%s.my.cnf' % (self.tmpdir, self.id)
-        credsfile = open(credsfilename, 'wb')
-        credsfile.write(
-            "[client]\n" \
-            "host=%s\n" \
-            "user=%s\n" \
-            "pass=%s\n\n" % \
-            (self.dbhost, self.dbuser, self.dbpass)
-        )
-        credsfile.flush()
-        credsfile.close()
+        # Create temporary credentials file
+        if 'defaults' in dir(self):
+            credsfilename = self.defaults
+        elif self.dbuser is not None:
+            credsfilename = '%s/%s.my.cnf' % (self.tmpdir, self.id)
+            credsfile = open(credsfilename, 'wb')
+            credsfile.write(
+                "[client]\n" \
+                "host=%s\n" \
+                "user=%s\n" \
+                "pass=%s\n\n" % \
+                (self.dbhost, self.dbuser, self.dbpass)
+            )
+            credsfile.flush()
+            credsfile.close()
+            os.chmod(credsfilename, 0400)
 
-        dumpfilename = '%s/%s.sql' % (self.tmpdir, self.id)
-        logging.info("Backing up '%s' (%s)..." % (self.name, self.type))
-        dumpfile = open(dumpfilename, 'wb')
-        dumpargs = ['mysqldump', '--defaults-file=%s' % credsfilename]
-        if not 'noevents' in dir(self) or not self.noevents:
-            dumpargs.append('--events')
-        dumpargs.append(self.dbname)
-        dumpproc1 = subprocess.Popen(dumpargs, stdout=dumpfile, stderr=subprocess.PIPE)
-        if  dumpproc1.stdout:
-            dumpproc1.stdout.close()
-        dumpproc1.wait()
-        exitcode = dumpproc1.returncode
-        errmsg = dumpproc1.stderr.read()
-        if exitcode != 0:
-            raise BackupException("Error while dumping: %s" % errmsg)
-        dumpfile.close()
-
-        os.unlink(credsfilename)
+        # Perform dump and remove creds file
+        try:
+            dumpfilename = '%s/%s.sql' % (self.tmpdir, self.id)
+            logging.info("Backing up '%s' (%s)..." % (self.name, self.type))
+            dumpfile = open(dumpfilename, 'wb')
+            dumpargs = ['mysqldump', ('--defaults-file=%s' % credsfilename), ('--host=%s' % self.dbhost)]
+            if not 'noevents' in dir(self) or not self.noevents:
+                dumpargs.append('--events')
+            dumpargs.append(self.dbname)
+            dumpproc1 = subprocess.Popen(dumpargs, stdout=dumpfile, stderr=subprocess.PIPE)
+            if  dumpproc1.stdout:
+                dumpproc1.stdout.close()
+            dumpproc1.wait()
+            exitcode = dumpproc1.returncode
+            errmsg = dumpproc1.stderr.read()
+            if exitcode != 0:
+                raise BackupException("Error while dumping: %s" % errmsg)
+            dumpfile.close()
+        finally:
+            os.unlink(credsfilename)
 
         return dumpfilename

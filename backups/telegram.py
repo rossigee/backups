@@ -8,8 +8,14 @@ from backups.notification import BackupNotification
 class Telegram(BackupNotification):
     def __init__(self, config):
         BackupNotification.__init__(self, config, 'telegram')
-        self.api_token = config.get('telegram', 'api_token')
-        self.chat_id = config.get('telegram', 'chat_id')
+        try:
+            self.api_token = config.get('telegram', 'api_token')
+        except:
+            self.api_token = config.get_or_envvar('defaults', 'api_token', 'TELEGRAM_API_TOKEN')
+        try:
+            self.chat_id = config.get('telegram', 'chat_id')
+        except:
+            self.chat_id = config.get_or_envvar('defaults', 'chat_id', 'TELEGRAM_CHAT_ID')
 
     def notify_success(self, source, hostname, filename, stats):
         filesize = stats.getSizeDescription()
@@ -22,9 +28,10 @@ class Telegram(BackupNotification):
         try:
             f = urllib2.urlopen(url, data)
             response = f.read()
+            logging.info("Sent success notification via Telegram.")
         except urllib2.HTTPError, error:
             contents = error.read()
-            logging.error("Unable to send Telegram notification: " + contents)
+            logging.error("Unable to send Telegram success notification: " + contents)
 
     def notify_failure(self, source, hostname, e):
         message = "Backup of '%s' (%s) on '%s' failed: %s" % (source.name, source.type, hostname, str(e)),
@@ -36,6 +43,7 @@ class Telegram(BackupNotification):
         try:
             f = urllib2.urlopen(url, data)
             response = f.read()
+            logging.info("Sent failure notification via Telegram.")
         except urllib2.HTTPError, error:
             contents = error.read()
-            logging.error("Unable to send Telegram notification: " + contents)
+            logging.error("Unable to send Telegram failure notification: " + contents)

@@ -29,10 +29,8 @@ from backups.exceptions import BackupException
 RUN_AS_USER=os.getenv('BACKUP_RUN_AS_USER', 'backups')
 
 class BackupRunInstance:
-    def __init__(self):
-        self.hostname = 'localhost'
-        if 'BACKUPS_HOSTNAME' in os.environ:
-            self.hostname = os.environ['BACKUPS_HOSTNAME']
+    def __init__(self, hostname = 'localhost'):
+        self.hostname = hostname
         self.notifications = []
         self.sources = []
         self.destinations = []
@@ -78,6 +76,20 @@ class BackupRunInstance:
 
         logging.debug("Complete.")
 
+# Special configuration file parser that can check for envvars as a fallback
+# where a value is not specified in the config file
+class EnvvarConfigParser(ConfigParser.RawConfigParser):
+    def get_or_envvar(self, section, option, envvarname):
+        try:
+            val = self.get(section, option)
+            if val is not None or section != 'defaults':
+                return val
+        except:
+            pass
+        if envvarname not in os.environ:
+            return None
+        return os.environ[envvarname]
+
 def main():
     try:
         # User check
@@ -102,12 +114,12 @@ def main():
         elif args.verbose:
             logging.basicConfig(level=logging.INFO)
 
-        # Read our configuration file
-        config = ConfigParser.RawConfigParser()
+        # Read our configuration file our special config handler
+        config = EnvvarConfigParser()
         config.read(configfile)
 
-        # Create an instance, configure and run it
-        defaults = config.items('defaults')
+        # Determine hostname
+        hostname = config.get_or_envvar('defaults', 'hostname', 'BACKUPS_HOSTNAME')
 
         # Instantiate handlers for any listed destinations
         destinations = []
@@ -168,8 +180,7 @@ def main():
         if len(sources) < 1:
             raise BackupException("No sources listed in configuration file.")
 
-        instance = BackupRunInstance()
-        instance.hostname = config.get('defaults', 'hostname')
+        instance = BackupRunInstance(hostname)
         instance.notifications = notifications
         instance.sources = sources
         instance.destinations = destinations

@@ -7,32 +7,15 @@ import time
 import boto.rds
 
 from backups.exceptions import BackupException
-from backups.source import BackupSource
+from backups.mysql import MySQL
 
-class RDS(BackupSource):
+class RDS(MySQL):
     def __init__(self, backup_id, config):
-        self.id = backup_id
-        self.name = backup_id
-        self.type = "RDS"
         config_id = 'rds-%s' % backup_id
-        self.dbname = config.get(config_id, 'dbname')
-        self.instancename = config.get(config_id, 'instancename')
-        if config.has_option(config_id, 'defaults'):
-            self.defaults = config.get(config_id, 'defaults')
-        if config.has_option(config_id, 'noevents'):
-            self.noevents = config.get(config_id, 'noevents')
-        if config.has_option(config_id, 'name'):
-            self.name = config.get(config_id, 'name')
-        if config.has_option(config_id, 'passphrase'):
-            self.passphrase = config.get(config_id, 'passphrase')
-        else:
-            self.passphrase = config.get('defaults', 'passphrase')
-        if config.has_option('defaults', 'tmpdir'):
-            self.tmpdir = config.get('defaults', 'tmpdir')
-        else:
-            self.tmpdir = "/var/tmp"
-        self.hostname = config.get('defaults', 'hostname')
+        BackupSource.__init__(self, backup_id, config, config_id, "RDS", "sql.gpg")
+        self.__common_init__(backup_id, config, config_id)
 
+        self.instancename = config.get(config_id, 'instancename')
         self.rds_region = config.get(config_id, 'region')
         self.security_group = config.get(config_id, 'security_group')
         if config.has_option(config_id, 'instance_class'):
@@ -86,25 +69,7 @@ class RDS(BackupSource):
 
         # Fire off the mysqldump
         try:
-            dumpfilename = '%s/%s.sql' % (self.tmpdir, self.id)
-            logging.info("Backing up '%s' (%s)..." % (self.name, self.type))
-            dumpfile = open(dumpfilename, 'wb')
-            if 'defaults' in dir(self):
-                dumpargs = ['mysqldump', ('--defaults-file=%s' % self.defaults), ('--host=%s' % hostname)]
-            else:
-                dumpargs = ['mysqldump', ('--host=%s' % hostname)]
-            if not 'noevents' in dir(self) or not self.noevents:
-                dumpargs.append('--events')
-            dumpargs.append(self.dbname)
-            dumpproc1 = subprocess.Popen(dumpargs, stdout=dumpfile, stderr=subprocess.PIPE)
-            dumpproc1.stdout.close()
-            dumpproc1.wait()
-            exitcode = dumpproc1.returncode
-            errmsg = dumpproc1.stderr.read()
-            if exitcode != 0:
-                raise BackupException("Error while dumping: %s" % errmsg)
-            dumpfile.close()
-
+            dumpfilename = MySQL.dump(self)
         finally:
             # Clear down the temporary RDS instance
             logging.info("Terminating RDS instance...")

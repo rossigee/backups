@@ -12,28 +12,20 @@ from backups.destination import BackupDestination
 
 class S3(BackupDestination):
     def __init__(self, config):
-        self.hostname = config.get('defaults', 'hostname')
+        BackupDestination.__init__(self, config)
         self.bucket = config.get('s3', 'bucket')
-
-        self.az = config.get('s3', 'availability_zone')
+        try:
+            self.az = config.get('s3', 'availability_zone')
+        except:
+            self.az = config.get_or_envvar('defaults', 'availability_zone', 'AWS_AVAILABILITY_ZONE')
         try:
             self.aws_key = config.get('s3', 'aws_access_key_id')
         except:
-            self.aws_key = config.get('defaults', 'aws_access_key_id')
+            self.aws_key = config.get_or_envvar('defaults', 'aws_access_key_id', 'AWS_ACCESS_KEY_ID')
         try:
             self.aws_secret = config.get('s3', 'aws_secret_access_key')
         except:
-            self.aws_secret = config.get('defaults', 'aws_secret_access_key')
-
-        try:
-            self.retention_copies = int(config.get('s3', 'retention_copies'))
-        except:
-            self.retention_copies = 0
-
-        try:
-            self.retention_days = int(config.get('s3', 'retention_days'))
-        except:
-            self.retention_days = 0
+            self.aws_secret = config.get_or_envvar('defaults', 'aws_secret_access_key', 'AWS_SECRET_ACCESS_KEY')
 
     def send(self, id, name, suffix, filename):
         s3location = "s3://%s/%s-%s.%s" % (

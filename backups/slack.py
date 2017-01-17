@@ -1,15 +1,17 @@
 import urllib, urllib2
 import os, os.path
 import json
+import logging
 
 from backups.notification import BackupNotification
 
 class Slack(BackupNotification):
     def __init__(self, config):
         BackupNotification.__init__(self, config, 'slack')
-        self.url = config.get('slack', 'url')
-        #self.username = config.get('slack', 'username')
-        #self.channel = config.get('slack', 'channel')
+        try:
+            self.url = config.get('slack', 'url')
+        except:
+            self.url = config.get_or_envvar('defaults', 'url', 'SLACK_URL')
 
     def notify_success(self, source, hostname, filename, stats):
         filesize = stats.getSizeDescription()
@@ -23,9 +25,13 @@ class Slack(BackupNotification):
         }
         data = urllib.urlencode({'payload': json.dumps(data)})
         req = urllib2.Request(self.url, data, headers)
-        f = urllib2.urlopen(req)
-
-        response = f.read()
+        try:
+            f = urllib2.urlopen(req)
+            response = f.read()
+            logging.info("Sent success notification via Slack.")
+        except urllib2.HTTPError, error:
+            contents = error.read()
+            logging.error("Unable to send Slack success notification: " + contents)
 
     def notify_failure(self, source, hostname, e):
         data = {
@@ -35,6 +41,10 @@ class Slack(BackupNotification):
         }
         data = urllib.urlencode({'payload': json.dumps(data)})
         req = urllib2.Request(self.url, data)
-        f = urllib2.urlopen(req)
-
-        response = f.read()
+        try:
+            f = urllib2.urlopen(req)
+            response = f.read()
+            logging.info("Sent failure notification via Slack.")
+        except urllib2.HTTPError, error:
+            contents = error.read()
+            logging.error("Unable to send Slack failure notification: " + contents)

@@ -12,28 +12,45 @@ from backups.notification import BackupNotification
 class SMTP(BackupNotification):
     def __init__(self, config):
         BackupNotification.__init__(self, config, 'smtp')
-        self.host = "127.0.0.1"
-        if config.has_option('smtp', 'host'):
+        try:
             self.host = config.get('smtp', 'host')
-        self.port = 25
-        if config.has_option('smtp', 'port'):
+        except:
+            self.host = config.get_or_envvar('defaults', 'host', 'SMTP_HOST')
+        try:
             self.port = int(config.get('smtp', 'port'))
-        if config.has_option('smtp', 'username'):
+        except:
+            self.port = int(config.get_or_envvar('defaults', 'port', 'SMTP_PORT'))
+        try:
             self.username = config.get('smtp', 'username')
-        if config.has_option('smtp', 'password'):
+        except:
+            self.username = config.get_or_envvar('defaults', 'username', 'SMTP_USERNAME')
+        try:
             self.password = config.get('smtp', 'password')
+        except:
+            self.password = config.get_or_envvar('defaults', 'password', 'SMTP_PASSWORD')
         try:
             self.use_tls = int(config.get('smtp', 'use_tls')) == 1
         except:
-            self.use_tls = False
+            self.use_tls = int(config.get_or_envvar('defaults', 'use_tls', 'SMTP_USE_TLS')) == 1
         try:
             self.use_ssl = int(config.get('smtp', 'use_ssl')) == 1
         except:
-            self.use_ssl = False
-        if config.has_option('smtp', 'success_to'):
+            self.use_ssl = int(config.get_or_envvar('defaults', 'use_ssl', 'SMTP_USE_SSL')) == 1
+        try:
             self.success_to = config.get('smtp', 'success_to')
-        if config.has_option('smtp', 'failure_to'):
+        except:
+            self.success_to = config.get_or_envvar('defaults', 'success_to', 'SMTP_SUCCESS_TO')
+        try:
             self.failure_to = config.get('smtp', 'failure_to')
+        except:
+            self.failure_to = config.get_or_envvar('defaults', 'failure', 'SMTP_FAILURE_TO')
+        try:
+            self.debug = int(config.get('smtp', 'debug')) == 1
+        except:
+            try:
+                self.debug = int(config.get_or_envvar('defaults', 'debug', 'SMTP_DEBUG')) == 1
+            except:
+                self.debug = False
 
     def notify_success(self, source, hostname, filename, stats):
         if 'success_to' not in dir(self) or not self.success_to:
@@ -50,13 +67,14 @@ class SMTP(BackupNotification):
             server = smtplib.SMTP_SSL(self.host, self.port)
         else:
             server = smtplib.SMTP(self.host, self.port)
-        #server.set_debuglevel(1)
+        if self.debug:
+            server.set_debuglevel(1)
         if self.use_tls:
             server.starttls()
             server.ehlo()
         if 'username' in dir(self):
             server.login(self.username, self.password)
-        server.sendmail(fromaddr, toaddrs, str(msg))
+        server.sendmail(fromaddr, toaddrs, msg.as_string())
         server.quit()
 
     def notify_failure(self, source, hostname, e):
@@ -74,11 +92,12 @@ class SMTP(BackupNotification):
             server = smtplib.SMTP_SSL(self.host, self.port)
         else:
             server = smtplib.SMTP(self.host, self.port)
-        #server.set_debuglevel(1)
+        if self.debug:
+            server.set_debuglevel(1)
         if self.use_tls:
             server.starttls()
             server.ehlo()
-        if 'username' is dir(self):
+        if 'username' in dir(self):
             server.login(self.username, self.password)
-        server.sendmail(fromaddr, toaddrs, str(msg))
+        server.sendmail(fromaddr, toaddrs, msg.as_string())
         server.quit()
