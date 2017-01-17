@@ -415,8 +415,7 @@ You can specify that a notification of success or failure (or just failure) is p
 
 ```
 [hipchat]
-auth_token=01235456yougetthisfromhipchatadmin
-room=Backups
+url=https://www.hipchat.com/...
 notify_on_success=False
 notify_on_failure=True
 ```
@@ -425,8 +424,7 @@ Parameters available in 'hipchat':
 
 | Config key | Environment variable | Purpose |
 |------------|----------------------|---------|
-| auth_token | HIPCHAT_AUTH_TOKEN | Hipchat auth token. |
-| room_id | HIPCHAT_ROOM_ID | Hipchat room id. |
+| url | HIPCHAT_URL | URL provided by Hipchat for v2 integration. |
 
 
 Notification - Slack
