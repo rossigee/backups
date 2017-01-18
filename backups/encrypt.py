@@ -4,7 +4,7 @@ import logging
 from backups.exceptions import BackupException
 
 def encrypt(filename, passphrase):
-    logging.debug("Encrypting '%s'..." % filename)
+    logging.info("Encrypting '%s'..." % filename)
     encfilename = '%s.gpg' % filename
     encerrsname = '%s.err' % filename
     encfile = open(encfilename, 'wb')
