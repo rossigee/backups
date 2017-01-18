@@ -34,11 +34,13 @@ class S3(BackupDestination):
             datetime.datetime.now().strftime("%Y%m%d%H%M%S"),
             suffix)
         logging.info("Uploading '%s' backup to S3 (%s)..." % (name, s3location))
-        uploadargs = ['aws', 's3', 'cp', filename, s3location]
-        uploadproc = subprocess.Popen(uploadargs, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        exitcode = uploadproc.wait()
+
+        uploadargs = ['aws', 's3', 'cp', '--only-show-errors', filename, s3location]
+        uploadproc = subprocess.Popen(uploadargs, stderr=subprocess.PIPE)
+        uploadproc.wait()
+        exitcode = uploadproc.returncode
+        errmsg = uploadproc.stderr.read()
         if exitcode != 0:
-            errmsg = "%s%s" % (uploadproc.stdout.read(), uploadproc.stderr.read())
             raise BackupException("Error while uploading: %s" % errmsg)
 
     def cleanup(self, id, name, suffix, stats):
