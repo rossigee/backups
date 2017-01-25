@@ -13,6 +13,7 @@ Currently implemented sources are:
 * folders (using tar)
 * MySQL databases (using mysqldump).
 * RDS database snapshots (using mysqldump).
+* PostgreSQL databases (using pg_dump).
 
 Currently implemented destinations are:
 
@@ -176,6 +177,41 @@ Parameters available in 'mysql':
 | dbpass | MYSQL_PASS | Password to connect to mySQL with. |
 | defaults | N/A | The location of an 'mysqlclient' credentials file to use instead of creating a temporary one with using above 'db*' variables. |
 | noevents | N/A | Don't pass the '--events' flag to 'mysqldump'. |
+
+
+Source - PostgreSQL Database
+----------------------------
+
+You can specify one of more PostgreSQL databases to be backed up.
+
+```
+[pgsql-livesupportdb]
+name=Live Company Data
+dbhost=localhost
+dbname=livecompanydb
+dbuser=backups
+dbpass=zzzuserwithreadonlyperms
+passphrase="your-devs-will-know-this"
+```
+
+The script creates a temporary 'pgpass' credentials file using the given details.
+
+```
+[client]
+host=specific.host.database.com
+...
+noevents=1
+```
+
+Parameters available in 'mysql':
+
+| Config key | Environment variable | Purpose |
+|------------|----------------------|---------|
+| name | N/A | Description of data being backed up (for reporting purposes). |
+| dbhost | PGSQL_HOST | Name of the PostgreSQL host to connect to. |
+| dbname | N/A | Name of the PostgreSQL database to back up. |
+| dbuser | PGSQL_USER | Username to connect to PostgreSQL as. |
+| dbpass | PGSQL_PASS | Password to connect to PostgreSQL with. |
 
 
 Source - RDS Database Snapshots

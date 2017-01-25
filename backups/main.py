@@ -117,6 +117,7 @@ def main():
         dynamic_modules = [
             'backups.sources.folder',
             'backups.sources.mysql',
+            'backups.sources.postgresql',
             'backups.destinations.s3',
             'backups.notifications.telegram'
         ]
