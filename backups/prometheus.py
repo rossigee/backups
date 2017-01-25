@@ -6,7 +6,7 @@ import base64
 
 from backups.notification import BackupNotification
 
-from prometheus_client import CollectorRegistry, Gauge, Counter, Summary, push_to_gateway
+from prometheus_client import CollectorRegistry, Gauge, Summary, push_to_gateway
 from prometheus_client.handlers.basic_auth import handler as http_basic_auth_handler
 
 class Prometheus(BackupNotification):
@@ -30,15 +30,15 @@ class Prometheus(BackupNotification):
     def notify_success(self, source, hostname, filename, stats):
         registry = CollectorRegistry()
 
-        g = Summary('backup_size', 'Size of backup file in bytes', registry=registry)
-        g.set(stats.size)
-        g = Summary('backup_dumptime', 'Time taken to dump and compress/encrypt backup in seconds', registry=registry)
-        g.set(stats.dumptime)
-        g = Summary('backup_uploadtime', 'Time taken to upload backup in seconds', registry=registry)
-        g.set(stats.uploadtime)
+        s = Summary('backup_size', 'Size of backup file in bytes', registry=registry)
+        s.observe(stats.size)
+        s = Summary('backup_dumptime', 'Time taken to dump and compress/encrypt backup in seconds', registry=registry)
+        s.observe(stats.dumptime)
+        s = Summary('backup_uploadtime', 'Time taken to upload backup in seconds', registry=registry)
+        s.observe(stats.uploadtime)
         g = Gauge('backup_retained_copies', 'Number of retained backups found on destination', registry=registry)
         g.set(stats.retained_copies)
-        g = Counter('backup_timestamp', 'Time backup completed as seconds-since-the-epoch', registry=registry)
+        g = Gauge('backup_timestamp', 'Time backup completed as seconds-since-the-epoch', registry=registry)
         g.set_to_current_time()
 
         def auth_handler(url, method, timeout, headers, data):
