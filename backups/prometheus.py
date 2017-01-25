@@ -27,13 +27,6 @@ class Prometheus(BackupNotification):
         self.notify_on_success = True
         self.notify_on_failure = False
 
-        auth_args = None
-        if self.username is not None:
-            self.auth_args = {
-                'username': self.username,
-                'password': self.password
-            }
-
     def notify_success(self, source, hostname, filename, stats):
         registry = CollectorRegistry()
 
@@ -48,6 +41,9 @@ class Prometheus(BackupNotification):
         g = Counter('backup_timestamp', 'Time backup completed as seconds-since-the-epoch', registry=registry)
         g.set_to_current_time()
 
-        push_to_gateway(self.url, job=source.id, registry=registry, handler=http_basic_auth_handler, handler_args=self.auth_args)
+        def auth_handler(url, method, timeout, headers, data):
+            return http_basic_auth_handler(url, method, timeout, headers, data, self.username, self.password)
+
+        push_to_gateway(self.url, job=source.id, registry=registry, handler=auth_handler)
 
         logging.info("Pushed metrics for job '%s' to gateway (%s)" % (source.id, self.url))
