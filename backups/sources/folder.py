@@ -2,9 +2,11 @@ import os, os.path
 import subprocess
 import logging
 
+from backups.sources import backupsource
+from backups.sources.source import BackupSource
 from backups.exceptions import BackupException
-from backups.source import BackupSource
 
+@backupsource('folder')
 class Folder(BackupSource):
     def __init__(self, backup_id, config):
         config_id = 'folder-%s' % backup_id

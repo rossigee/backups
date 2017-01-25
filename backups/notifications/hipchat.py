@@ -2,8 +2,11 @@ import urllib, urllib2
 import os, os.path
 import logging
 
-from backups.notification import BackupNotification
+from backups.exceptions import BackupException
+from backups.notifications import backupnotification
+from backups.notifications.notification import BackupNotification
 
+@backupnotification('hipchat')
 class Hipchat(BackupNotification):
     def __init__(self, config):
         BackupNotification.__init__(self, config, 'hipchat')

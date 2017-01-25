@@ -7,8 +7,10 @@ except:
     from email.MIMEText import MIMEText
 
 from backups.exceptions import BackupException
-from backups.notification import BackupNotification
+from backups.notifications import backupnotification
+from backups.notifications.notification import BackupNotification
 
+@backupnotification('smtp')
 class SMTP(BackupNotification):
     def __init__(self, config):
         BackupNotification.__init__(self, config, 'smtp')

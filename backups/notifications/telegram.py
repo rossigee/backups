@@ -3,8 +3,11 @@ import os, os.path
 import json
 import logging
 
-from backups.notification import BackupNotification
+from backups.exceptions import BackupException
+from backups.notifications import backupnotification
+from backups.notifications.notification import BackupNotification
 
+@backupnotification('telegram')
 class Telegram(BackupNotification):
     def __init__(self, config):
         BackupNotification.__init__(self, config, 'telegram')

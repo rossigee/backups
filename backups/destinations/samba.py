@@ -4,8 +4,10 @@ import subprocess
 import logging
 
 from backups.exceptions import BackupException
-from backups.destination import BackupDestination
+from backups.destinations import backupdestination
+from backups.destinations.destination import BackupDestination
 
+@backupdestination('samba')
 class Samba(BackupDestination):
     def __init__(self, config):
         BackupDestination.__init__(self, config)

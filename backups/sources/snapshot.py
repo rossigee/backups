@@ -6,9 +6,11 @@ import logging
 import datetime
 import json
 
+from backups.sources import backupsource
+from backups.sources.source import BackupSource
 from backups.exceptions import BackupException
-from backups.source import BackupSource
 
+@backupsource('snapshot')
 class Snapshot(BackupSource):
     def __init__(self, backup_id, config):
         config_id = 'snapshot-%s' % backup_id

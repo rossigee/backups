@@ -10,18 +10,6 @@ import logging
 import logging.handlers
 import ConfigParser
 
-import backups.folder
-import backups.mysql
-import backups.rds
-import backups.s3
-import backups.samba
-import backups.smtp
-import backups.snapshot
-import backups.hipchat
-import backups.slack
-import backups.telegram
-import backups.prometheus
-import backups.flagfile
 import backups.stats
 
 from backups.exceptions import BackupException
@@ -31,14 +19,17 @@ RUN_AS_USER=os.getenv('BACKUP_RUN_AS_USER', 'backups')
 class BackupRunInstance:
     def __init__(self, hostname = 'localhost'):
         self.hostname = hostname
-        self.notifications = []
+        self.source_modules = []
         self.sources = []
+        self.destination_modules = []
         self.destinations = []
+        self.notification_modules = []
+        self.notifications = []
 
         self.stats = backups.stats.BackupRunStatistics()
 
     def run(self):
-        # Loop through the defined sources...
+        # Loop through the defined source modules...
         for source in self.sources:
             # Trigger notifications as required
             for notification in self.notifications:
@@ -121,61 +112,45 @@ def main():
         # Determine hostname
         hostname = config.get_or_envvar('defaults', 'hostname', 'BACKUPS_HOSTNAME')
 
+        # Import main and additional handler library modules
+        #dynamic_modules = config.get('defaults', 'dynamic_modules').split(',')
+        dynamic_modules = [
+            'backups.sources.folder',
+            'backups.sources.mysql',
+            'backups.destinations.s3',
+            'backups.notifications.telegram'
+        ]
+        for modulename in dynamic_modules:
+            logging.debug("Importing module '%s'" % modulename)
+            module = __import__(modulename)
+
         # Instantiate handlers for any listed destinations
         destinations = []
-        for section in config.sections():
-            if section == 's3':
-                destination = backups.s3.S3(config)
-                destinations.append(destination)
-            if section == 'samba':
-                destination = backups.samba.Samba(config)
-                destinations.append(destination)
+        for dest_id, dest_class in backups.destinations.handlers.items():
+            logging.debug("Dest(%s) - %s" % (dest_id, dest_class))
+            for section in config.sections():
+                if section == dest_id:
+                    destination = dest_class(config)
+                    destinations.append(destination)
 
         # Instantiate handlers for any listed notifications
         notifications = []
-        for section in config.sections():
-            if section == 'smtp':
-                notification = backups.smtp.SMTP(config)
-                notifications.append(notification)
-            if section == 'hipchat':
-                notification = backups.hipchat.Hipchat(config)
-                notifications.append(notification)
-            if section == 'slack':
-                notification = backups.slack.Slack(config)
-                notifications.append(notification)
-            if section == 'telegram':
-                notification = backups.telegram.Telegram(config)
-                notifications.append(notification)
-            if section == 'prometheus':
-                notification = backups.prometheus.Prometheus(config)
-                notifications.append(notification)
-            if section == 'flagfile':
-                notification = backups.flagfile.Flagfile(config)
-                notifications.append(notification)
+        for notify_id, notify_class in backups.notifications.handlers.items():
+            logging.debug("Notify(%s) - %s" % (notify_id, notify_class))
+            for section in config.sections():
+                if section == notify_id:
+                    notification = notify_class(config)
+                    notifications.append(notification)
 
         # Loop through sections, process those we have sources for
         sources = []
-        for section in config.sections():
-            if section[0:7] == 'folder-':
-                backup_id = section[7:]
-                source = backups.folder.Folder(backup_id, config)
-                sources.append(source)
-            if section[0:6] == 'mysql-':
-                backup_id = section[6:]
-                source = backups.mysql.MySQL(backup_id, config)
-                sources.append(source)
-            if section[0:4] == 'rds-':
-                backup_id = section[4:]
-                source = backups.rds.RDS(backup_id, config)
-                sources.append(source)
-            if section[0:13] == 'snapshot-ec2-':
-                backup_id = section[13:]
-                source = backups.snapshot.EC2Snapshot(backup_id, config)
-                sources.append(source)
-            if section[0:13] == 'snapshot-rds-':
-                backup_id = section[13:]
-                source = backups.snapshot.RDSSnapshot(backup_id, config)
-                sources.append(source)
+        for source_id, source_class in backups.sources.handlers.items():
+            logging.debug("Source(%s) - %s" % (source_id, source_class))
+            for section in config.sections():
+                if section.startswith(source_id + "-"):
+                    backup_id = section[(len(source_id) + 1):]
+                    source = source_class(backup_id, config)
+                    sources.append(source)
 
         if len(sources) < 1:
             raise BackupException("No sources listed in configuration file.")

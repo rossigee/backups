@@ -1,7 +1,10 @@
 import os, os.path
 
-from backups.notification import BackupNotification
+from backups.exceptions import BackupException
+from backups.notifications import backupnotification
+from backups.notifications.notification import BackupNotification
 
+@backupnotification('flagfile')
 class Flagfile(BackupNotification):
     def __init__(self, config):
         self.filename = config.get('flagfile', 'filename')

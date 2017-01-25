@@ -8,8 +8,10 @@ import boto.s3
 import dateutil.parser
 
 from backups.exceptions import BackupException
-from backups.destination import BackupDestination
+from backups.destinations import backupdestination
+from backups.destinations.destination import BackupDestination
 
+@backupdestination('s3')
 class S3(BackupDestination):
     def __init__(self, config):
         BackupDestination.__init__(self, config)

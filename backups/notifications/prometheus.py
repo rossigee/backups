@@ -4,11 +4,14 @@ import json
 import logging
 import base64
 
-from backups.notification import BackupNotification
-
 from prometheus_client import CollectorRegistry, Gauge, Summary, push_to_gateway
 from prometheus_client.handlers.basic_auth import handler as http_basic_auth_handler
 
+from backups.exceptions import BackupException
+from backups.notifications import backupnotification
+from backups.notifications.notification import BackupNotification
+
+@backupnotification('prometheus')
 class Prometheus(BackupNotification):
     def __init__(self, config):
         BackupNotification.__init__(self, config, 'prometheus')
