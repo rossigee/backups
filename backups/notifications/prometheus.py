@@ -5,7 +5,7 @@ import logging
 import base64
 
 from prometheus_client import CollectorRegistry, Gauge, Summary, push_to_gateway
-from prometheus_client.handlers.basic_auth import handler as http_basic_auth_handler
+from prometheus_client.exposition import basic_auth_handler
 
 from backups.exceptions import BackupException
 from backups.notifications import backupnotification
@@ -45,7 +45,7 @@ class Prometheus(BackupNotification):
         g.set_to_current_time()
 
         def auth_handler(url, method, timeout, headers, data):
-            return http_basic_auth_handler(url, method, timeout, headers, data, self.username, self.password)
+            return basic_auth_handler(url, method, timeout, headers, data, self.username, self.password)
 
         push_to_gateway(self.url, job=source.id, registry=registry, handler=auth_handler)
 
