@@ -16,6 +16,24 @@ from backups.exceptions import BackupException
 
 RUN_AS_USER=os.getenv('BACKUP_RUN_AS_USER', 'backups')
 
+# TODO: Make this more easily configurable
+#dynamic_modules = config.get('defaults', 'dynamic_modules').split(',')
+dynamic_modules = [
+    'backups.sources.folder',
+    'backups.sources.mysql',
+    'backups.sources.postgresql',
+    'backups.sources.rds',
+    'backups.sources.snapshot',
+    'backups.destinations.s3',
+    'backups.destinations.samba',
+    'backups.notifications.flagfile',
+    'backups.notifications.hipchat',
+    'backups.notifications.prometheus',
+    'backups.notifications.slack',
+    'backups.notifications.smtp',
+    'backups.notifications.telegram',
+]
+
 class BackupRunInstance:
     def __init__(self, hostname = 'localhost'):
         self.hostname = hostname
@@ -113,14 +131,6 @@ def main():
         hostname = config.get_or_envvar('defaults', 'hostname', 'BACKUPS_HOSTNAME')
 
         # Import main and additional handler library modules
-        #dynamic_modules = config.get('defaults', 'dynamic_modules').split(',')
-        dynamic_modules = [
-            'backups.sources.folder',
-            'backups.sources.mysql',
-            'backups.sources.postgresql',
-            'backups.destinations.s3',
-            'backups.notifications.telegram'
-        ]
         for modulename in dynamic_modules:
             logging.debug("Importing module '%s'" % modulename)
             module = __import__(modulename)
