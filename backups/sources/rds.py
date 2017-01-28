@@ -7,7 +7,7 @@ import time
 import boto.rds
 
 from backups.exceptions import BackupException
-from backups.mysql import MySQL
+from backups.sources.mysql import MySQL
 
 class RDS(MySQL):
     def __init__(self, backup_id, config):
