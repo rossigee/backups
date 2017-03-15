@@ -30,7 +30,7 @@ class Folder(BackupSource):
         dumpproc1.wait()
         exitcode = dumpproc1.returncode
         errmsg = dumpproc1.stderr.read()
-        if exitcode != 0:
+        if exitcode == 2:
             raise BackupException("Error while dumping: %s" % errmsg)
         tarfile.close()
         return tarfilename
