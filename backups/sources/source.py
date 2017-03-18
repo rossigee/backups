@@ -20,7 +20,12 @@ class BackupSource:
             self.tmpdir = "/var/tmp"
 
     def dump_and_compress(self):
-        filename = self.dump()
-        encfilename = backups.encrypt.encrypt(filename, self.passphrase)
-        os.unlink(filename)
-        return encfilename
+        filenames = self.dump()
+        if isinstance(filenames, basestring):
+            filenames = [filenames, ]
+        encrypted_files = []
+        for filename in filenames:
+            encfilename = backups.encrypt.encrypt(filename, self.passphrase)
+            encrypted_files.append(encfilename)
+            os.unlink(filename)
+        return encrypted_files

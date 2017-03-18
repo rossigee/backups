@@ -16,9 +16,8 @@ from backups.exceptions import BackupException
 
 RUN_AS_USER=os.getenv('BACKUP_RUN_AS_USER', 'backups')
 
-# TODO: Make this more easily configurable
-#dynamic_modules = config.get('defaults', 'dynamic_modules').split(',')
-dynamic_modules = [
+# Default set of modules to import
+default_modules = [
     'backups.sources.folder',
     'backups.sources.mysql',
     'backups.sources.postgresql',
@@ -56,16 +55,22 @@ class BackupRunInstance:
             try:
                 # Dump and compress
                 starttime = time.time()
-                dumpfile = source.dump_and_compress()
+                dumpfiles = source.dump_and_compress()
                 endtime = time.time()
                 self.stats.dumptime = endtime - starttime
-                self.stats.size = os.path.getsize(dumpfile)
 
-                # Send to each listed destination
+                # Add up backup file sizes
+                totalsize = 0
+                for dumpfile in dumpfiles:
+                    totalsize = totalsize + os.path.getsize(dumpfile)
+                self.stats.size = totalsize
+
+                # Send each dump file to each listed destination
                 starttime = time.time()
-                for destination in self.destinations:
-                    destination.send(source.id, source.name, source.suffix, dumpfile)
-                    destination.cleanup(source.id, source.name, source.suffix, self.stats)
+                for dumpfile in dumpfiles:
+                    for destination in self.destinations:
+                        destination.send(source.id, source.name, source.suffix, dumpfile)
+                        destination.cleanup(source.id, source.name, source.suffix, self.stats)
                 endtime = time.time()
                 self.stats.uploadtime = endtime - starttime
 
@@ -91,7 +96,7 @@ class EnvvarConfigParser(ConfigParser.RawConfigParser):
     def get_or_envvar(self, section, option, envvarname):
         try:
             val = self.get(section, option)
-            if val is not None or section != 'defaults':
+            if val is not None:
                 return val
         except:
             pass
@@ -131,9 +136,17 @@ def main():
         hostname = config.get_or_envvar('defaults', 'hostname', 'BACKUPS_HOSTNAME')
 
         # Import main and additional handler library modules
-        for modulename in dynamic_modules:
+        backup_modules = config.get_or_envvar('defaults', 'backup_modules', "BACKUP_MODULES")
+        if backup_modules is not None:
+            backup_modules = backup_modules.split(',')
+        else:
+            backup_modules = default_modules
+        for modulename in backup_modules:
             logging.debug("Importing module '%s'" % modulename)
-            module = __import__(modulename)
+            try:
+                module = __import__(modulename)
+            except ImportError as e:
+                logging.error("Error importing module: %s" % e.__str__())
 
         # Instantiate handlers for any listed destinations
         destinations = []
