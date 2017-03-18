@@ -5,7 +5,7 @@ setup(name = 'backups',
     description = 'Data Backup Scripts',
     author = 'Ross Golder',
     author_email = 'ross@golder.org',
-    url = 'http://www.golder.org/',
+    url = 'https://github.com/rossigee/backups',
     packages = ['backups', 'backups.sources', 'backups.destinations', 'backups.notifications'],
     entry_points = {
         'console_scripts': [
