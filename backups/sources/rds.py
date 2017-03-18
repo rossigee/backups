@@ -6,14 +6,20 @@ import time
 
 import boto.rds
 
+from backups.sources import backupsource
 from backups.exceptions import BackupException
+from backups.sources.source import BackupSource
 from backups.sources.mysql import MySQL
 
+@backupsource('rds')
 class RDS(MySQL):
     def __init__(self, backup_id, config):
         config_id = 'rds-%s' % backup_id
         BackupSource.__init__(self, backup_id, config, config_id, "RDS", "sql.gpg")
         self.__common_init__(backup_id, config, config_id)
+
+    def __common_init__(self, backup_id, config, config_id):
+        MySQL.__common_init__(self, backup_id, config, config_id)
 
         self.instancename = config.get(config_id, 'instancename')
         self.rds_region = config.get(config_id, 'region')
