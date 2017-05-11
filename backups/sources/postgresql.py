@@ -63,4 +63,4 @@ class PostgreSQL(BackupSource):
         finally:
             os.unlink(credsfilename)
 
-        return dumpfilename
+        return [dumpfilename, ]

@@ -72,4 +72,4 @@ class MySQL(BackupSource):
         finally:
             os.unlink(credsfilename)
 
-        return dumpfilename
+        return [dumpfilename, ]

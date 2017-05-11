@@ -33,4 +33,4 @@ class Folder(BackupSource):
         if exitcode == 2:
             raise BackupException("Error while dumping: %s" % errmsg)
         tarfile.close()
-        return tarfilename
+        return [tarfilename, ]

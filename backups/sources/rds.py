@@ -83,10 +83,4 @@ class RDS(MySQL):
             logging.info("Terminating RDS instance...")
             dbinstance.stop(skip_final_snapshot=True)
 
-        return dumpfilename
-
-    def dump_and_compress(self):
-        filename = self.dump()
-        encfilename = backups.encrypt.encrypt(filename, self.passphrase)
-        os.unlink(filename)
-        return encfilename
+        return [dumpfilename, ]

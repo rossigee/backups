@@ -39,7 +39,7 @@ class Snapshot(BackupSource):
             'retval': str(retval)
         }))
         statfile.close()
-        return statfilename
+        return [statfilename, ]
 
     def dump_and_compress(self):
         return self.dump()
