@@ -6,6 +6,8 @@ import time
 
 import boto.rds
 
+import backups.encrypt
+
 from backups.sources import backupsource
 from backups.exceptions import BackupException
 from backups.sources.source import BackupSource
