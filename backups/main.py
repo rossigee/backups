@@ -59,6 +59,8 @@ class BackupRunInstance:
                 # Dump and compress
                 starttime = time.time()
                 dumpfiles = source.dump_and_compress()
+                if not isinstance(dumpfiles, list):
+                    dumpfiles = [dumpfiles, ]
                 endtime = time.time()
                 self.stats.dumptime = endtime - starttime
 
@@ -82,6 +84,8 @@ class BackupRunInstance:
                     notification._notify_success(source, self.hostname, dumpfile, self.stats)
 
             except Exception as e:
+                import traceback
+                traceback.print_exc()
                 # Trigger notifications as required
                 for notification in self.notifications:
                     notification._notify_failure(source, self.hostname, e)
