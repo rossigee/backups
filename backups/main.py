@@ -11,6 +11,9 @@ import logging.handlers
 import ConfigParser
 
 import backups.stats
+import backups.sources
+import backups.destinations
+import backups.notifications
 
 from backups.exceptions import BackupException
 
