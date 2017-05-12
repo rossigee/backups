@@ -1,6 +1,10 @@
+import datetime
+
 # Abstract
 class BackupDestination:
     def __init__(self, config):
+        self.runtime = datetime.datetime.now()
+
         self.hostname = config.get_or_envvar('defaults', 'hostname', 'BACKUPS_HOSTNAME')
 
         try:

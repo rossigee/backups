@@ -74,8 +74,8 @@ class BackupRunInstance:
                 starttime = time.time()
                 for dumpfile in dumpfiles:
                     for destination in self.destinations:
-                        destination.send(source.id, source.name, source.suffix, dumpfile)
-                        destination.cleanup(source.id, source.name, source.suffix, self.stats)
+                        destination.send(source.id, source.name, dumpfile)
+                        destination.cleanup(source.id, source.name, self.stats)
                 endtime = time.time()
                 self.stats.uploadtime = endtime - starttime
 

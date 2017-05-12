@@ -1,5 +1,4 @@
 import os, os.path
-import datetime
 import subprocess
 import logging
 
@@ -29,12 +28,12 @@ class S3(BackupDestination):
         except:
             self.aws_secret = config.get_or_envvar('defaults', 'aws_secret_access_key', 'AWS_SECRET_ACCESS_KEY')
 
-    def send(self, id, name, suffix, filename):
-        s3location = "s3://%s/%s-%s.%s" % (
+    def send(self, id, name, filename):
+        s3location = "s3://%s/%s/%s/%s" % (
             self.bucket,
             id,
-            datetime.datetime.now().strftime("%Y%m%d%H%M%S"),
-            suffix)
+            self.runtime.strftime("%Y%m%d%H%M%S"),
+            os.path.basename(filename))
         logging.info("Uploading '%s' backup to S3 (%s)..." % (name, s3location))
 
         uploadargs = ['aws', 's3', 'cp', '--only-show-errors', filename, s3location]
@@ -45,7 +44,7 @@ class S3(BackupDestination):
         if exitcode != 0:
             raise BackupException("Error while uploading: %s" % errmsg)
 
-    def cleanup(self, id, name, suffix, stats):
+    def cleanup(self, id, name, stats):
         s3location = "s3://%s/%s" % (self.bucket, id)
         logging.info("Clearing down older '%s' backups from S3 (%s)..." % (name, s3location))
 
@@ -56,8 +55,6 @@ class S3(BackupDestination):
         bucket = s3conn.get_bucket(self.bucket)
         candidates = []
         for key in bucket.list(prefix=id):
-            if not key.name.endswith(suffix):
-                continue
             parsed_date = dateutil.parser.parse(key.last_modified)
             candidates.append([parsed_date, key.name])
         candidates.sort()
