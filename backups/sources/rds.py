@@ -77,7 +77,7 @@ class RDS(MySQL):
 
         # Fire off the mysqldump
         try:
-            dumpfilename = MySQL.dump(self)
+            dumpfilename = MySQL.dump(self)[0]
         finally:
             # Clear down the temporary RDS instance
             logging.info("Terminating RDS instance...")
