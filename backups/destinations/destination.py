@@ -13,7 +13,7 @@ class BackupDestination:
         except:
             pass
         try:
-            self.retention_copies = int(config.get('defaults', 'retention_copies', 'RETENTION_COPIES'))
+            self.retention_copies = int(config.get_or_envvar('defaults', 'retention_copies', 'RETENTION_COPIES'))
         except:
             pass
 
@@ -23,6 +23,6 @@ class BackupDestination:
         except:
             pass
         try:
-            self.retention_days = int(config.get('defaults', 'retention_days', 'RETENTION_DAYS'))
+            self.retention_days = int(config.get_or_envvar('defaults', 'retention_days', 'RETENTION_DAYS'))
         except:
             pass
