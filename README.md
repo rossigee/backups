@@ -1,4 +1,4 @@
-Backup scripts
+- [ ] Backup scripts
 ==============
 
 This python script, given a backup configuration, will cycle through a list of backup 'sources', packing them up and encrypting them into a temporary file, which it will upload to each of a list of destinations, finally reporting success or failure via a list of notification handlers.
@@ -384,6 +384,8 @@ Parameters available in 's3':
 | availability_zone | AWS_AVAILABILITY_ZONE | AWS availability zone. |
 | aws_access_key_id | AWS_ACCESS_KEY_ID | AWS access key. |
 | aws_secret_access_key | AWS_SECRET_ACCESS_KEY | AWS secret access key. |
+| retention_copies | RETENTION_COPIES | How many copies of older backups to keep. |
+| retention_days | RETENTION_DAYS | How many days of backups to keep. |
 
 
 Destination - Samba
