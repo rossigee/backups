@@ -54,7 +54,7 @@ class S3(BackupDestination):
             aws_secret_access_key=self.aws_secret)
         bucket = s3conn.get_bucket(self.bucket)
         candidates = []
-        for key in bucket.list(prefix=id):
+        for key in bucket.list(prefix="%s/" % id):
             parsed_date = dateutil.parser.parse(key.last_modified)
             candidates.append([parsed_date, key.name])
         candidates.sort()
