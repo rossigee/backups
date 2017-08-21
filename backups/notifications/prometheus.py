@@ -15,18 +15,9 @@ from backups.notifications.notification import BackupNotification
 class Prometheus(BackupNotification):
     def __init__(self, config):
         BackupNotification.__init__(self, config, 'prometheus')
-        try:
-            self.url = config.get('prometheus', 'url')
-        except:
-            self.url = config.get_or_envvar('defaults', 'url', 'PUSHGW_URL')
-        try:
-            self.username = config.get('prometheus', 'username')
-        except:
-            self.username = config.get_or_envvar('defaults', 'username', 'PUSHGW_USERNAME')
-        try:
-            self.password = config.get('prometheus', 'password')
-        except:
-            self.password = config.get_or_envvar('defaults', 'password', 'PUSHGW_PASSWORD')
+        self.url = config['url']
+        self.url = config['credentials']['username']
+        self.url = config['credentials']['password']
         self.notify_on_success = True
         self.notify_on_failure = False
 

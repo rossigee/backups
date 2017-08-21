@@ -11,7 +11,7 @@ class Folder(BackupSource):
     def __init__(self, backup_id, config):
         config_id = 'folder-%s' % backup_id
         BackupSource.__init__(self, backup_id, config, config_id, "Folder", "tar.gpg")
-        self.path = config.get(config_id, 'path')
+        self.path = config['path']
         self.excludes = []
         for k, v in config.items(config_id):
             if k == 'exclude':

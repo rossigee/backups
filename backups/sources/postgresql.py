@@ -14,22 +14,12 @@ class PostgreSQL(BackupSource):
         self.__common_init__(backup_id, config, config_id)
 
     def __common_init__(self, backup_id, config, config_id):
-        try:
-            self.dbhost = config.get(config_id, 'dbhost')
-        except:
-            self.dbhost = config.get_or_envvar(config_id, 'dbhost', 'PGSQL_HOST')
-        try:
-            self.dbuser = config.get(config_id, 'dbuser')
-        except:
-            self.dbuser = config.get_or_envvar(config_id, 'dbuser', 'PGSQL_USER')
-        try:
-            self.dbpass = config.get(config_id, 'dbpass')
-        except:
-            self.dbpass = config.get_or_envvar(config_id, 'dbpass', 'PGSQL_PASS')
-        self.dbname = config.get(config_id, 'dbname')
-        if config.has_option(config_id, 'defaults'):
-            self.defaults = config.get(config_id, 'defaults')
-        self.hostname = config.get_or_envvar('defaults', 'hostname', 'BACKUPS_HOSTNAME')
+        self.dbhost = config['dbhost']
+        self.dbuser = config['dbuser']
+        self.dbpass = config['dbpass']
+        self.dbname = config['dbname']
+        if 'defaults' in config:
+            self.defaults = config['defaults']
 
     def dump(self):
         # Create temporary credentials file

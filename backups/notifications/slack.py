@@ -11,10 +11,7 @@ from backups.notifications.notification import BackupNotification
 class Slack(BackupNotification):
     def __init__(self, config):
         BackupNotification.__init__(self, config, 'slack')
-        try:
-            self.url = config.get('slack', 'url')
-        except:
-            self.url = config.get_or_envvar('defaults', 'url', 'SLACK_URL')
+        self.url = config['url']
 
     def notify_success(self, source, hostname, filename, stats):
         filesize = stats.getSizeDescription()

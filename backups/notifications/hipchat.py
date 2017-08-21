@@ -10,10 +10,7 @@ from backups.notifications.notification import BackupNotification
 class Hipchat(BackupNotification):
     def __init__(self, config):
         BackupNotification.__init__(self, config, 'hipchat')
-        try:
-            self.url = config.get('hipchat', 'url')
-        except:
-            self.url = config.get_or_envvar('defaults', 'url', 'HIPCHAT_URL')
+        self.url = config['url']
 
     def notify_success(self, source, hostname, filename, stats):
         filesize = stats.getSizeDescription()

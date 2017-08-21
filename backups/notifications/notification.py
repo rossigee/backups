@@ -2,14 +2,14 @@
 class BackupNotification:
     def __init__(self, config, section):
         self.notify_on_start = False
-        if config.has_option(section, 'notify_on_start'):
-            self.notify_on_start = config.get(section, 'notify_on_start') == 'True'
+        if 'notify_on_start' in config:
+            self.notify_on_start = bool(config['notify_on_start'])
         self.notify_on_success = False
-        if config.has_option(section, 'notify_on_success'):
-            self.notify_on_success = config.get(section, 'notify_on_success') == 'True'
-        self.notify_on_failure = True
-        if config.has_option(section, 'notify_on_failure'):
-            self.notify_on_failure = config.get(section, 'notify_on_failure') == 'True'
+        if 'notify_on_success' in config:
+            self.notify_on_success = bool(config['notify_on_success'])
+        self.notify_on_failure = False
+        if 'notify_on_failure' in config:
+            self.notify_on_failure = bool(config['notify_on_failure'])
 
     def _notify_start(self, source, hostname):
         if not self.notify_on_start:
