@@ -15,13 +15,12 @@ from backups.sources.mysql import MySQL
 
 @backupsource('rds')
 class RDS(MySQL):
-    def __init__(self, backup_id, config):
-        config_id = 'rds-%s' % backup_id
-        BackupSource.__init__(self, backup_id, config, config_id, "RDS", "sql.gpg")
-        self.__common_init__(backup_id, config, config_id)
+    def __init__(self, config):
+        BackupSource.__init__(self, config, "RDS", "sql.gpg")
+        self.__common_init__(config)
 
-    def __common_init__(self, backup_id, config, config_id):
-        MySQL.__common_init__(self, backup_id, config, config_id)
+    def __common_init__(self, config):
+        MySQL.__common_init__(self, config)
 
         self.instancename = config['instancename']
         self.rds_region = config['region']

@@ -4,8 +4,8 @@ import os
 
 # Abstract
 class BackupSource:
-    def __init__(self, backup_id, config, config_id, type, suffix):
-        self.id = backup_id
+    def __init__(self, config, type, suffix):
+        self.id = config['id']
         self.type = type
         self.suffix = suffix
         self.tmpdir = "/var/tmp"

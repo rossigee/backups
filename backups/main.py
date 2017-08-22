@@ -35,8 +35,9 @@ default_modules = [
 ]
 
 class BackupRunInstance:
-    def __init__(self, hostname = 'localhost'):
-        self.hostname = hostname
+    def __init__(self):
+        import platform
+        self.hostname = platform.node()
         self.source_modules = []
         self.sources = []
         self.destination_modules = []
@@ -144,7 +145,7 @@ def main():
         for notify_id, notify_class in backups.notifications.handlers.items():
             logging.debug("Notify(%s) - %s" % (notify_id, notify_class))
             for notify_config in config['notifications']:
-                if nofify_config['type'] == notify_id:
+                if notify_config['type'] == notify_id:
                     notification = notify_class(notify_config)
                     notifications.append(notification)
 
@@ -153,16 +154,14 @@ def main():
         for source_id, source_class in backups.sources.handlers.items():
             logging.debug("Source(%s) - %s" % (source_id, source_class))
             for source_config in config['sources']:
-                section = source_config['type']
-                if section.startswith(source_id + "-"):
-                    backup_id = section[(len(source_id) + 1):]
-                    source = source_class(backup_id, source_config)
+                if source_config['type'] == source_id:
+                    source = source_class(source_config)
                     sources.append(source)
 
         if len(sources) < 1:
             raise BackupException("No sources listed in configuration file.")
 
-        instance = BackupRunInstance(hostname)
+        instance = BackupRunInstance()
         instance.notifications = notifications
         instance.sources = sources
         instance.destinations = destinations

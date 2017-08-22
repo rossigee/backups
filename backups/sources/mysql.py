@@ -8,12 +8,11 @@ from backups.exceptions import BackupException
 
 @backupsource('mysql')
 class MySQL(BackupSource):
-    def __init__(self, backup_id, config):
-        config_id = 'mysql-%s' % backup_id
-        BackupSource.__init__(self, backup_id, config, config_id, "MySQL", "sql.gpg")
-        self.__common_init__(backup_id, config, config_id)
+    def __init__(self, config):
+        BackupSource.__init__(self, config, "MySQL", "sql.gpg")
+        self.__common_init__(config)
 
-    def __common_init__(self, backup_id, config, config_id):
+    def __common_init__(self, config):
         self.dbhost = config['dbhost']
         self.dbuser = config['dbuser']
         self.dbpass = config['dbpass']

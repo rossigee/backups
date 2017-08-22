@@ -12,9 +12,8 @@ from backups.exceptions import BackupException
 
 @backupsource('snapshot')
 class Snapshot(BackupSource):
-    def __init__(self, backup_id, config):
-        config_id = 'snapshot-%s' % backup_id
-        BackupSource.__init__(self, backup_id, config, config_id, "Snapshot", None)
+    def __init__(self, config):
+        BackupSource.__init__(self, config, "Snapshot", None)
         self.vol = config['volume_id']
         self.datestr = datetime.datetime.utcnow().strftime("%Y-%m-%d")
         self.az = config['availability_zone']
