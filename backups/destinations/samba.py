@@ -11,23 +11,11 @@ from backups.destinations.destination import BackupDestination
 class Samba(BackupDestination):
     def __init__(self, config):
         BackupDestination.__init__(self, config)
-        self.sambashare = config.get('samba', 'share')
-        try:
-            self.sambahost = config.get('samba', 'hostname')
-        except:
-            self.sambahost = config.get_or_envvar('defaults', 'hostname', 'SMB_HOSTNAME')
-        try:
-            self.username = config.get('samba', 'username')
-        except:
-            self.username = config.get_or_envvar('defaults', 'username', 'SMB_USERNAME')
-        try:
-            self.password = config.get('samba', 'password')
-        except:
-            self.password = config.get_or_envvar('defaults', 'password', 'SMB_PASSWORD')
-        try:
-            self.workgroup = config.get('samba', 'workgroup')
-        except:
-            self.workgroup = config.get_or_envvar('defaults', 'workgroup', 'SMB_WORKGROUP')
+        self.sambashare = config['share']
+        self.sambahost = config['host']
+        self.workgroup = config['workgroup']
+        self.username = config['credentials']['username']
+        self.password = config['credentials']['password']
 
     def send(self, id, name, suffix, filename):
         credsfilename = '%s/%s.smbauth' % (self.tmpdir, self.id)

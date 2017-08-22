@@ -8,14 +8,12 @@ from backups.exceptions import BackupException
 
 @backupsource('folder')
 class Folder(BackupSource):
-    def __init__(self, backup_id, config):
-        config_id = 'folder-%s' % backup_id
-        BackupSource.__init__(self, backup_id, config, config_id, "Folder", "tar.gpg")
-        self.path = config.get(config_id, 'path')
+    def __init__(self, config):
+        BackupSource.__init__(self, config, "Folder", "tar.gpg")
+        self.path = config['path']
         self.excludes = []
-        for k, v in config.items(config_id):
-            if k == 'exclude':
-                self.excludes.append(v)
+        if 'excludes' in config:
+            self.excludes = config['excludes']
 
     def dump(self):
         tarfilename = '%s/%s.tar' % (self.tmpdir, self.id)

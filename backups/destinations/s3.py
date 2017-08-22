@@ -14,19 +14,10 @@ from backups.destinations.destination import BackupDestination
 class S3(BackupDestination):
     def __init__(self, config):
         BackupDestination.__init__(self, config)
-        self.bucket = config.get('s3', 'bucket')
-        try:
-            self.az = config.get('s3', 'availability_zone')
-        except:
-            self.az = config.get_or_envvar('defaults', 'availability_zone', 'AWS_AVAILABILITY_ZONE')
-        try:
-            self.aws_key = config.get('s3', 'aws_access_key_id')
-        except:
-            self.aws_key = config.get_or_envvar('defaults', 'aws_access_key_id', 'AWS_ACCESS_KEY_ID')
-        try:
-            self.aws_secret = config.get('s3', 'aws_secret_access_key')
-        except:
-            self.aws_secret = config.get_or_envvar('defaults', 'aws_secret_access_key', 'AWS_SECRET_ACCESS_KEY')
+        self.bucket = config['bucket']
+        self.region = config['region']
+        self.aws_key = config['credentials']['aws_access_key_id']
+        self.aws_secret = config['credentials']['aws_secret_access_key']
 
     def send(self, id, name, filename):
         s3location = "s3://%s/%s/%s/%s" % (
@@ -37,7 +28,11 @@ class S3(BackupDestination):
         logging.info("Uploading '%s' backup to S3 (%s)..." % (name, s3location))
 
         uploadargs = ['aws', 's3', 'cp', '--only-show-errors', filename, s3location]
-        uploadproc = subprocess.Popen(uploadargs, stderr=subprocess.PIPE)
+        uploadenv = os.environ.copy()
+        uploadenv['AWS_ACCESS_KEY_ID'] = self.aws_key
+        uploadenv['AWS_SECRET_ACCESS_KEY'] = self.aws_secret
+        uploadenv['AWS_DEFAULT_REGION'] = self.region
+        uploadproc = subprocess.Popen(uploadargs, stderr=subprocess.PIPE, env=uploadenv)
         uploadproc.wait()
         exitcode = uploadproc.returncode
         errmsg = uploadproc.stderr.read()
@@ -49,7 +44,7 @@ class S3(BackupDestination):
         logging.info("Clearing down older '%s' backups from S3 (%s)..." % (name, s3location))
 
         # Gather list of potentials first
-        s3conn = boto.s3.connect_to_region(self.az,
+        s3conn = boto.s3.connect_to_region(self.region,
             aws_access_key_id=self.aws_key,
             aws_secret_access_key=self.aws_secret)
         bucket = s3conn.get_bucket(self.bucket)

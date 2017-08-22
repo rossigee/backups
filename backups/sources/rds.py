@@ -15,21 +15,19 @@ from backups.sources.mysql import MySQL
 
 @backupsource('rds')
 class RDS(MySQL):
-    def __init__(self, backup_id, config):
-        config_id = 'rds-%s' % backup_id
-        BackupSource.__init__(self, backup_id, config, config_id, "RDS", "sql.gpg")
-        self.__common_init__(backup_id, config, config_id)
+    def __init__(self, config):
+        BackupSource.__init__(self, config, "RDS", "sql.gpg")
+        self.__common_init__(config)
 
-    def __common_init__(self, backup_id, config, config_id):
-        MySQL.__common_init__(self, backup_id, config, config_id)
+    def __common_init__(self, config):
+        MySQL.__common_init__(self, config)
 
-        self.instancename = config.get(config_id, 'instancename')
-        self.rds_region = config.get(config_id, 'region')
-        self.security_group = config.get(config_id, 'security_group')
-        if config.has_option(config_id, 'instance_class'):
-            self.instance_class = config.get(config_id, 'instance_class')
-        else:
-            self.instance_class = "db.m1.small"
+        self.instancename = config['instancename']
+        self.rds_region = config['region']
+        self.security_group = config['security_group']
+        self.instance_class = "db.m1.small"
+        if 'instance_class' in config:
+            self.instance_class = config['instance_class']
 
     def dump(self):
         # Identify the most recent snapshot for the given instancename

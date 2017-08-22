@@ -11,14 +11,8 @@ from backups.notifications.notification import BackupNotification
 class Telegram(BackupNotification):
     def __init__(self, config):
         BackupNotification.__init__(self, config, 'telegram')
-        try:
-            self.api_token = config.get('telegram', 'api_token')
-        except:
-            self.api_token = config.get_or_envvar('defaults', 'api_token', 'TELEGRAM_API_TOKEN')
-        try:
-            self.chat_id = config.get('telegram', 'chat_id')
-        except:
-            self.chat_id = config.get_or_envvar('defaults', 'chat_id', 'TELEGRAM_CHAT_ID')
+        self.api_token = config['api_token']
+        self.chat_id = config['chat_id']
 
     def notify_success(self, source, hostname, filename, stats):
         filesize = stats.getSizeDescription()

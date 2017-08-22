@@ -8,7 +8,7 @@ import argparse
 import getpass
 import logging
 import logging.handlers
-import ConfigParser
+import json
 
 import backups.stats
 import backups.sources
@@ -16,8 +16,6 @@ import backups.destinations
 import backups.notifications
 
 from backups.exceptions import BackupException
-
-RUN_AS_USER=os.getenv('BACKUP_RUN_AS_USER', 'backups')
 
 # Default set of modules to import
 default_modules = [
@@ -37,8 +35,9 @@ default_modules = [
 ]
 
 class BackupRunInstance:
-    def __init__(self, hostname = 'localhost'):
-        self.hostname = hostname
+    def __init__(self):
+        import platform
+        self.hostname = platform.node()
         self.source_modules = []
         self.sources = []
         self.destination_modules = []
@@ -97,26 +96,8 @@ class BackupRunInstance:
 
         logging.debug("Complete.")
 
-# Special configuration file parser that can check for envvars as a fallback
-# where a value is not specified in the config file
-class EnvvarConfigParser(ConfigParser.RawConfigParser):
-    def get_or_envvar(self, section, option, envvarname):
-        try:
-            val = self.get(section, option)
-            if val is not None:
-                return val
-        except:
-            pass
-        if envvarname not in os.environ:
-            return None
-        return os.environ[envvarname]
-
 def main():
     try:
-        # User check
-        if getpass.getuser() != RUN_AS_USER:
-            sys.exit("ERROR: Must be run as '%s' user." % RUN_AS_USER)
-
         # Make doubly sure temp files aren't world-viewable
         os.umask(077)
 
@@ -135,18 +116,13 @@ def main():
         elif args.verbose:
             logging.basicConfig(level=logging.INFO)
 
-        # Read our configuration file our special config handler
-        config = EnvvarConfigParser()
-        config.read(configfile)
-
-        # Determine hostname
-        hostname = config.get_or_envvar('defaults', 'hostname', 'BACKUPS_HOSTNAME')
+        # Read our JSON configuration file
+        with open(configfile) as json_conf:
+            config = json.load(json_conf)
 
         # Import main and additional handler library modules
-        backup_modules = config.get_or_envvar('defaults', 'backup_modules', "BACKUP_MODULES")
-        if backup_modules is not None:
-            backup_modules = backup_modules.split(',')
-        else:
+        backup_modules = config['modules']
+        if backup_modules is None:
             backup_modules = default_modules
         for modulename in backup_modules:
             logging.debug("Importing module '%s'" % modulename)
@@ -159,34 +135,33 @@ def main():
         destinations = []
         for dest_id, dest_class in backups.destinations.handlers.items():
             logging.debug("Dest(%s) - %s" % (dest_id, dest_class))
-            for section in config.sections():
-                if section == dest_id:
-                    destination = dest_class(config)
+            for dest_config in config['destinations']:
+                if dest_config['type'] == dest_id:
+                    destination = dest_class(dest_config)
                     destinations.append(destination)
 
         # Instantiate handlers for any listed notifications
         notifications = []
         for notify_id, notify_class in backups.notifications.handlers.items():
             logging.debug("Notify(%s) - %s" % (notify_id, notify_class))
-            for section in config.sections():
-                if section == notify_id:
-                    notification = notify_class(config)
+            for notify_config in config['notifications']:
+                if notify_config['type'] == notify_id:
+                    notification = notify_class(notify_config)
                     notifications.append(notification)
 
         # Loop through sections, process those we have sources for
         sources = []
         for source_id, source_class in backups.sources.handlers.items():
             logging.debug("Source(%s) - %s" % (source_id, source_class))
-            for section in config.sections():
-                if section.startswith(source_id + "-"):
-                    backup_id = section[(len(source_id) + 1):]
-                    source = source_class(backup_id, config)
+            for source_config in config['sources']:
+                if source_config['type'] == source_id:
+                    source = source_class(source_config)
                     sources.append(source)
 
         if len(sources) < 1:
             raise BackupException("No sources listed in configuration file.")
 
-        instance = BackupRunInstance(hostname)
+        instance = BackupRunInstance()
         instance.notifications = notifications
         instance.sources = sources
         instance.destinations = destinations
