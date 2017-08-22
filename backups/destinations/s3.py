@@ -28,7 +28,11 @@ class S3(BackupDestination):
         logging.info("Uploading '%s' backup to S3 (%s)..." % (name, s3location))
 
         uploadargs = ['aws', 's3', 'cp', '--only-show-errors', filename, s3location]
-        uploadproc = subprocess.Popen(uploadargs, stderr=subprocess.PIPE)
+        uploadenv = os.environ.copy()
+        uploadenv['AWS_ACCESS_KEY_ID'] = self.aws_key
+        uploadenv['AWS_SECRET_ACCESS_KEY'] = self.aws_secret
+        uploadenv['AWS_DEFAULT_REGION'] = self.region
+        uploadproc = subprocess.Popen(uploadargs, stderr=subprocess.PIPE, env=uploadenv)
         uploadproc.wait()
         exitcode = uploadproc.returncode
         errmsg = uploadproc.stderr.read()
