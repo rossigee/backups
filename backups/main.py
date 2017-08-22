@@ -8,7 +8,7 @@ import argparse
 import getpass
 import logging
 import logging.handlers
-import ConfigParser
+import json
 
 import backups.stats
 import backups.sources
