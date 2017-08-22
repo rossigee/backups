@@ -16,8 +16,8 @@ class Prometheus(BackupNotification):
     def __init__(self, config):
         BackupNotification.__init__(self, config, 'prometheus')
         self.url = config['url']
-        self.url = config['credentials']['username']
-        self.url = config['credentials']['password']
+        self.username = config['credentials']['username']
+        self.password = config['credentials']['password']
         self.notify_on_success = True
         self.notify_on_failure = False
 
@@ -30,8 +30,9 @@ class Prometheus(BackupNotification):
         s.observe(stats.dumptime)
         s = Summary('backup_uploadtime', 'Time taken to upload backup in seconds', registry=registry)
         s.observe(stats.uploadtime)
-        g = Gauge('backup_retained_copies', 'Number of retained backups found on destination', registry=registry)
-        g.set(stats.retained_copies)
+        if stats.retained_copies is not None:
+            g = Gauge('backup_retained_copies', 'Number of retained backups found on destination', registry=registry)
+            g.set(stats.retained_copies)
         g = Gauge('backup_timestamp', 'Time backup completed as seconds-since-the-epoch', registry=registry)
         g.set_to_current_time()
 
