@@ -33,7 +33,7 @@ class MySQL(BackupSource):
                 "[client]\n" \
                 "host=%s\n" \
                 "user=%s\n" \
-                "pass=%s\n\n" % \
+                "password=%s\n\n" % \
                 (self.dbhost, self.dbuser, self.dbpass)
             )
             credsfile.flush()
