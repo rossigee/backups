@@ -49,7 +49,6 @@ class PostgreSQL(BackupSource):
                 raise BackupException("Error while dumping: %s" % errmsg)
             dumpfile.close()
         finally:
-            pass
-            #os.unlink(credsfilename)
+            os.unlink(credsfilename)
 
         return [dumpfilename, ]
