@@ -31,7 +31,6 @@ class PostgreSQL(BackupSource):
         credsfile.flush()
         credsfile.close()
         os.chmod(credsfilename, 0400)
-        os.environ['PGPASSFILE'] = credsfilename
 
         # Perform dump and remove creds file
         try:
@@ -40,8 +39,10 @@ class PostgreSQL(BackupSource):
             dumpfile = open(dumpfilename, 'wb')
             dumpargs = ['pg_dump', '-h', self.dbhost]
             dumpargs.append(self.dbname)
-            dumpproc1 = subprocess.Popen(dumpargs, stdout=dumpfile, stderr=subprocess.PIPE)
-            if  dumpproc1.stdout:
+            dumpenv = os.environ.copy()
+            dumpenv['PGPASSFILE'] = credsfilename
+            dumpproc1 = subprocess.Popen(dumpargs, stdout=dumpfile, stderr=subprocess.PIPE, env=dumpenv)
+            if dumpproc1.stdout:
                 dumpproc1.stdout.close()
             dumpproc1.wait()
             exitcode = dumpproc1.returncode
