@@ -12,7 +12,7 @@ class PostgreSQL(BackupSource):
         BackupSource.__init__(self, config, "PostgreSQL", "sql.gpg")
         self.__common_init__(config)
 
-    def __common_init__(self, backup_id, config, config_id):
+    def __common_init__(self, config):
         self.dbhost = config['dbhost']
         self.dbuser = config['dbuser']
         self.dbpass = config['dbpass']
