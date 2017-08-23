@@ -23,22 +23,20 @@ class PostgreSQL(BackupSource):
     def dump(self):
         # Create temporary credentials file
         credsfilename = '%s/%s.pgpass' % (self.tmpdir, self.id)
-        credsfile = open(credsfilename, 'wb')
-        credsfile.write(
-            "%s:%s:%s:%s:%s\n" % \
-            (self.dbhost, '5432', self.dbname, self.dbuser, self.dbpass)
-        )
-        credsfile.flush()
-        credsfile.close()
-        os.chmod(credsfilename, 0400)
+        with open(credsfilename, 'wb') as credsfile:
+            credsfile.write(
+                "%s:%s:%s:%s:%s\n" % \
+                (self.dbhost, '5432', self.dbname, self.dbuser, self.dbpass)
+            )
+            credsfile.flush()
+            credsfile.close()
 
         # Perform dump and remove creds file
         try:
             dumpfilename = '%s/%s.sql' % (self.tmpdir, self.id)
             logging.info("Backing up '%s' (%s)..." % (self.name, self.type))
             dumpfile = open(dumpfilename, 'wb')
-            dumpargs = ['pg_dump', '-h', self.dbhost]
-            dumpargs.append(self.dbname)
+            dumpargs = ['pg_dump', '-h', self.dbhost, '--username', self.dbuser, self.dbname]
             dumpenv = os.environ.copy()
             dumpenv['PGPASSFILE'] = credsfilename
             dumpproc1 = subprocess.Popen(dumpargs, stdout=dumpfile, stderr=subprocess.PIPE, env=dumpenv)
@@ -51,6 +49,7 @@ class PostgreSQL(BackupSource):
                 raise BackupException("Error while dumping: %s" % errmsg)
             dumpfile.close()
         finally:
-            os.unlink(credsfilename)
+            pass
+            #os.unlink(credsfilename)
 
         return [dumpfilename, ]
