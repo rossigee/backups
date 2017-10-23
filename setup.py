@@ -1,7 +1,7 @@
 from setuptools import setup
 
 setup(name = 'backups',
-    version = '2.0.0',
+    version = '2.0.1',
     description = 'Data Backup Scripts',
     author = 'Ross Golder',
     author_email = 'ross@golder.org',
