@@ -1,4 +1,4 @@
-import urllib, urllib2
+import urllib2, json
 import os, os.path
 import logging
 
@@ -14,15 +14,19 @@ class Hipchat(BackupNotification):
 
     def notify_success(self, source, hostname, filename, stats):
         filesize = stats.getSizeDescription()
+        headers = {
+            'Content-type': 'application/json; charset=UTF-8'
+        }
         data = {
             'from': 'Backup Agent',
             'message': "Backup of '%s' (%s) on '%s' was successful [size: %s]." % (source.name, source.type, hostname, filesize),
             'message_format': 'text',
-            'notify': 0,
+            'notify': False,
             'color': 'green',
         }
         try:
-            f = urllib2.urlopen(self.url, urllib.urlencode(data))
+            r = urllib2.Request(self.url, json.dumps(data), headers)
+            f = urllib2.urlopen(r)
             response = f.read()
             logging.info("Sent success notification via Hipchat.")
         except urllib2.HTTPError, error:
@@ -30,15 +34,19 @@ class Hipchat(BackupNotification):
             logging.error("Unable to send Hipchat success notification: " + contents)
 
     def notify_failure(self, source, hostname, e):
+        headers = {
+            'Content-type': 'application/json; charset=UTF-8'
+        }
         data = {
             'from': 'Backup Agent',
             'message': "Backup of '%s' (%s) on '%s' failed: %s" % (source.name, source.type, hostname, str(e)),
             'message_format': 'text',
-            'notify': 1,
+            'notify': True,
             'color': 'red',
         }
         try:
-            f = urllib2.urlopen(self.url, urllib.urlencode(data))
+            r = urllib2.Request(self.url, json.dumps(data), headers)
+            f = urllib2.urlopen(r)
             response = f.read()
             logging.info("Sent failure notification via Hipchat.")
         except urllib2.HTTPError, error:
