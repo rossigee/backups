@@ -28,6 +28,7 @@ default_modules = [
     'backups.destinations.samba',
     'backups.notifications.flagfile',
     'backups.notifications.hipchat',
+    'backups.notifications.discord',
     'backups.notifications.prometheus',
     'backups.notifications.slack',
     'backups.notifications.smtp',

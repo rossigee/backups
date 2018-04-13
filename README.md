@@ -24,6 +24,7 @@ Currently implemented notifications are:
 
 * an e-mail (via smtplib)
 * a HipChat room notification
+* a Discord room notification
 * a Slack notification
 * a Telegram notification
 * a simple flag file
@@ -433,6 +434,27 @@ Parameters available in 'hipchat':
 | Config key | Purpose |
 |------------|---------|
 | url | URL provided by Hipchat for v2 integration. |
+
+
+Notification - Discord
+----------------------
+
+You can specify that a notification of success or failure (or just failure) is posted as a Discord channel notification by providing the Discord webhook URL.
+
+```json
+{
+  "type": "discord",
+  "url": "https://discordapp.com/api/webhooks/...",
+  "notify_on_success": 0,
+  "notify_on_failure": 1
+}
+```
+
+Parameters available in 'discord':
+
+| Config key | Purpose |
+|------------|---------|
+| url | Discord webhook URL. |
 
 
 Notification - Slack
