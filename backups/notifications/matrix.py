@@ -1,4 +1,5 @@
 import urllib, urllib2
+import json
 import logging
 
 from backups.exceptions import BackupException
@@ -11,7 +12,7 @@ class Matrix(BackupNotification):
         BackupNotification.__init__(self, config, 'matrix')
         self.url = "{}/_matrix/client/r0/rooms/{}/send/m.room.message?access_token={}".format(
             config['url'],
-            urllib.urlencode(config['room_id']),
+            config['room_id'],
             config['access_token']
         )
 
@@ -20,10 +21,10 @@ class Matrix(BackupNotification):
             'Content-type': 'application/json; charset=UTF-8',
         }
         data = {
-            'mgstype': 'm.text',
+            'msgtype': 'm.text',
             'body': text,
         }
-        req = urllib2.Request(self.url, json=data, headers)
+        req = urllib2.Request(self.url, data=json.dumps(data), headers=headers)
         return urllib2.urlopen(req)
 
     def notify_success(self, source, hostname, filename, stats):
