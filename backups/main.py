@@ -30,6 +30,7 @@ default_modules = [
     'backups.notifications.hipchat',
     'backups.notifications.discord',
     'backups.notifications.prometheus',
+    'backups.notifications.matrix',
     'backups.notifications.slack',
     'backups.notifications.smtp',
     'backups.notifications.telegram',

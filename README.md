@@ -457,6 +457,31 @@ Parameters available in 'discord':
 | url | Discord webhook URL. |
 
 
+Notification - Matrix
+--------------------
+
+You can specify that a notification of success or failure (or just failure) is posted as a Matrix room notification by providing Matrix service details.
+
+```json
+{
+  "type": "matrix",
+  "url": "https://matrix.org",
+  "access_token": "ALongStringOfCharacters",
+  "room_id": "!roomidstringofchars@matrix.org",
+  "notify_on_success": 0,
+  "notify_on_failure": 1
+}
+```
+
+Parameters available in 'matrix':
+
+| Config key | Purpose |
+|------------|---------|
+| url | Matrix home server URL. |
+| access_token | Pre-obtained access token. |
+| room_id | Matrix room ID for notifications. |
+
+
 Notification - Slack
 --------------------
 
