@@ -20,7 +20,7 @@ class Folder(BackupSource):
         logging.info("Backing up '%s' (%s)..." % (self.name, self.type))
         tarfile = open(tarfilename, 'wb')
         os.chdir(os.path.dirname(self.path))
-        dumpargs = ['sudo', 'tar', 'cf', tarfilename, os.path.basename(self.path)]
+        dumpargs = ['sudo', 'tar', 'cf', tarfilename, "./" + os.path.basename(self.path)]
         for exclude in self.excludes:
             dumpargs.append('--exclude')
             dumpargs.append(exclude)
