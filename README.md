@@ -18,7 +18,7 @@ Currently implemented sources are:
 Currently implemented destinations are:
 
 * an S3 bucket (uses aws-cli)
-* an GS bucket (uses gsutil)
+* a GS bucket (uses gsutil)
 * a Samba share (uses pysmbc)
 
 Currently implemented notifications are:
@@ -187,7 +187,6 @@ For example:
 
 ```json
 {
-  ...
   "options": "--all-databases --single-transaction --skip-triggers"
 }
 ```
@@ -400,8 +399,8 @@ Parameters available in 'gs':
 |------------|---------|
 | bucket | GS bucket to dump files to. |
 | gs_service_client_id | GCP service account. |
-| gs_service_key_file | Location of service account file. |
-| gs_service_key_file_password | Password for service account file (in P12 format). |
+| gs_service_key_file | Location of service account file (in P12 format). |
+| gs_service_key_file_password | Password for service account file. |
 | retention_copies | How many copies of older backups to keep. |
 | retention_days |  How many days of backups to keep. |
 

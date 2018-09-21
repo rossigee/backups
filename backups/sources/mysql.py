@@ -51,11 +51,11 @@ class MySQL(BackupSource):
             if not 'noevents' in dir(self) or not self.noevents:
                 dumpargs.append('--events')
             all_databases = False
-            if hasattr(self, 'directives'):
+            if hasattr(self, 'options'):
                 for raw_option in self.options.split():
                     option = raw_option.strip()
                     dumpargs.append(option)
-                    if option == '--all-databases':
+                    if not all_databases and option == '--all-databases':
                         all_databases = True
             if not all_databases:
                 dumpargs.append('--databases')
