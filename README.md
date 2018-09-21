@@ -154,7 +154,7 @@ Parameters available in 'folder':
 Source - MySQL Database
 -----------------------
 
-You can specify one of more mySQL databases to be backed up.
+You can specify one or more mySQL databases to be backed up.
 
 The 'modules' paramter must contain the `backups.sources.mysql` module and there should be one or more source objects such as:
 
@@ -182,17 +182,29 @@ host=specific.host.database.com
 noevents=1
 ```
 
+If supplied, directives should be a single string with all options seperated with a space.
+For example:
+
+```json
+{
+  ...
+  "options": "--all-databases --single-transaction --skip-triggers"
+}
+```
+
+NOTE: If you pass --all-databases as a directive, dbname will be ignored.
+
 Parameters available in 'mysql':
 
 | Config key | Purpose |
 |------------|---------|
 | name | Description of data being backed up (for reporting purposes). |
 | dbhost | Name of the mySQL host to connect to. |
-| dbname | Name of the mySQL database to back up. |
+| dbname | Name of the mySQL database to back up. You may specify more than one. |
 | dbuser | Username to connect to mySQL as. |
 | dbpass | Password to connect to mySQL with. |
 | defaults | The location of an 'mysqlclient' credentials file to use instead of creating a temporary one with using above 'db*' variables. |
-| directives | An optional string of options to pass to 'mysqldump'. |
+| options | An optional string of options to pass to 'mysqldump'. |
 | noevents | Don't pass the '--events' flag to 'mysqldump'. |
 
 
