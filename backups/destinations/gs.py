@@ -5,6 +5,7 @@ import datetime
 
 import boto
 from dateutil import parser, tz
+import gcs_oauth2_boto_plugin
 
 from backups.exceptions import BackupException
 from backups.destinations import backupdestination
