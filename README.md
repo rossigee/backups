@@ -18,6 +18,7 @@ Currently implemented sources are:
 Currently implemented destinations are:
 
 * an S3 bucket (uses aws-cli)
+* a GS bucket (uses gsutil)
 * a Samba share (uses pysmbc)
 
 Currently implemented notifications are:
@@ -153,7 +154,7 @@ Parameters available in 'folder':
 Source - MySQL Database
 -----------------------
 
-You can specify one of more mySQL databases to be backed up.
+You can specify one or more mySQL databases to be backed up.
 
 The 'modules' paramter must contain the `backups.sources.mysql` module and there should be one or more source objects such as:
 
@@ -181,16 +182,28 @@ host=specific.host.database.com
 noevents=1
 ```
 
+If supplied, directives should be a single string with all options seperated with a space.
+For example:
+
+```json
+{
+  "options": "--all-databases --single-transaction --skip-triggers"
+}
+```
+
+NOTE: If you pass --all-databases as a directive, dbname will be ignored.
+
 Parameters available in 'mysql':
 
 | Config key | Purpose |
 |------------|---------|
 | name | Description of data being backed up (for reporting purposes). |
 | dbhost | Name of the mySQL host to connect to. |
-| dbname | Name of the mySQL database to back up. |
+| dbname | Name of the mySQL database to back up. You may specify more than one. |
 | dbuser | Username to connect to mySQL as. |
 | dbpass | Password to connect to mySQL with. |
 | defaults | The location of an 'mysqlclient' credentials file to use instead of creating a temporary one with using above 'db*' variables. |
+| options | An optional string of options to pass to 'mysqldump'. |
 | noevents | Don't pass the '--events' flag to 'mysqldump'. |
 
 
@@ -345,6 +358,49 @@ Parameters available in 's3':
 | region | AWS availability zone. |
 | aws_access_key_id | AWS access key. |
 | aws_secret_access_key | AWS secret access key. |
+| retention_copies | How many copies of older backups to keep. |
+| retention_days |  How many days of backups to keep. |
+
+
+Destination - GS
+----------------
+
+You can specify a GS bucket to back up to.
+
+```json
+{
+  "bucket": "backups-123456789",
+}
+```
+
+The 'gs' destination module uses the boto library in conjunction with 'gsutil.' The 'gsutil' CLI client gets it's authentication credentials and other configuration from the 'backups' user's '~/.boto' file.
+ 
+The GS module requires a GCP service account to be created with appropriate permissions to write and delete from GS buckets. The key file needs to be in P12 format. IMPORTANT: Properly secure this file and related information.
+
+More information on configuring gsutil and boto as well as preparing a service account can be found at https://cloud.google.com/storage/docs/boto-plugin.
+
+The boto file should contain entries similar to:
+```
+[Credentials]
+gs_service_client_id = some-service-account@your-project.iam.gserviceaccount.com
+gs_service_key_file = /some/path/to/your/service-account-credential-file.p12
+gs_service_key_file_password = asecretpassword
+
+[GSUtil]
+default_api_version = 2
+```
+AWS and GCP credential data can happily share the same section.
+
+Additionally, the GS destination provides some simple backup rotation options. After a successful backup, the backup files are listed and the 'retention_copies' and 'retention_days' options, if present, are applied to identify and remove any backups that are no longer required.
+
+Parameters available in 'gs':
+
+| Config key | Purpose |
+|------------|---------|
+| bucket | GS bucket to dump files to. |
+| gs_service_client_id | GCP service account. |
+| gs_service_key_file | Location of service account file (in P12 format). |
+| gs_service_key_file_password | Password for service account file. |
 | retention_copies | How many copies of older backups to keep. |
 | retention_days |  How many days of backups to keep. |
 
