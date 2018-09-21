@@ -15,9 +15,6 @@ class GS(BackupDestination):
     def __init__(self, config):
         BackupDestination.__init__(self, config)
         self.bucket = config['bucket']
-        self.gs_id = config['credentials']['gs_service_client_id']
-        self.gs_key_file = config['credentials']['gs_service_key_file']
-        self.gs_key_file_password = config['credentials']['gs_service_key_file_password']
 
     def send(self, id, name, filename):
         gslocation = "gs://%s/%s/%s/%s" % (
