@@ -52,7 +52,8 @@ class MySQL(BackupSource):
             if not 'noevents' in dir(self) or not self.noevents:
                 dumpargs.append('--events')
             if hasattr(self, 'directives'):
-                dumpargs.append(self.directives)
+                for directive in self.directives.split():
+                    dumpargs.append(directive.strip())
             dumpargs.append(self.dbname)
             dumpproc1 = subprocess.Popen(dumpargs, stdout=dumpfile, stderr=subprocess.PIPE)
             if  dumpproc1.stdout:
