@@ -21,6 +21,9 @@ class MySQL(BackupSource):
             self.defaults = config['defaults']
         if 'noevents' in config:
             self.noevents = config['noevents']
+        self.has_directives = 'directives' in config
+        if 'directives' in config:
+            self.directives = config['directives']
 
     def dump(self):
         # Create temporary credentials file
@@ -48,6 +51,8 @@ class MySQL(BackupSource):
             dumpargs = ['mysqldump', ('--defaults-file=%s' % credsfilename), ('--host=%s' % self.dbhost), '-R']
             if not 'noevents' in dir(self) or not self.noevents:
                 dumpargs.append('--events')
+            if hasattr(self, 'directives'):
+                dumpargs.append(self.directives)
             dumpargs.append(self.dbname)
             dumpproc1 = subprocess.Popen(dumpargs, stdout=dumpfile, stderr=subprocess.PIPE)
             if  dumpproc1.stdout:

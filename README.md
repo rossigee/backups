@@ -18,6 +18,7 @@ Currently implemented sources are:
 Currently implemented destinations are:
 
 * an S3 bucket (uses aws-cli)
+* an GS bucket (uses gsutil)
 * a Samba share (uses pysmbc)
 
 Currently implemented notifications are:
@@ -191,6 +192,7 @@ Parameters available in 'mysql':
 | dbuser | Username to connect to mySQL as. |
 | dbpass | Password to connect to mySQL with. |
 | defaults | The location of an 'mysqlclient' credentials file to use instead of creating a temporary one with using above 'db*' variables. |
+| directives | An optional string of options to pass to 'mysqldump'. |
 | noevents | Don't pass the '--events' flag to 'mysqldump'. |
 
 
@@ -345,6 +347,44 @@ Parameters available in 's3':
 | region | AWS availability zone. |
 | aws_access_key_id | AWS access key. |
 | aws_secret_access_key | AWS secret access key. |
+| retention_copies | How many copies of older backups to keep. |
+| retention_days |  How many days of backups to keep. |
+
+
+Destination - GS
+----------------
+
+You can specify a GS bucket to back up to.
+
+```json
+{
+  "bucket": "backups-123456789",
+}
+```
+
+The 'gsutil' CLI client gets it's authentication credentials and other configuration from the 'backups' user's '~/.boto' file. 
+The GS module requires a GCP service account to be created with appropriate permissions to write and delete from GS buckets. The key file needs to be in P12 format. Properly secure this file and related information.
+
+```
+[Credentials]
+gs_service_client_id = some-service-account@your-project.iam.gserviceaccount.com
+gs_service_key_file = /some/path/to/your/service-account-credential-file.p12
+gs_service_key_file_password = asecretpassword
+
+[GSUtil]
+default_api_version = 2
+```
+
+Additionally, the GS destination provides some simple backup rotation options. After a successful backup, the backup files are listed and the 'retention_copies' and 'retention_days' options, if present, are applied to identify and remove any backups that are no longer required.
+
+Parameters available in 's3':
+
+| Config key | Purpose |
+|------------|---------|
+| bucket | GS bucket to dump files to. |
+| gs_service_client_id | GCP service account. |
+| gs_service_key_file | Location of service account file. |
+| gs_service_key_file_password | Password for service account file (in P12 format). |
 | retention_copies | How many copies of older backups to keep. |
 | retention_days |  How many days of backups to keep. |
 
