@@ -21,7 +21,7 @@ class Slack(BackupNotification):
         h, m = divmod(m, 60)
         return "%d:%02d:%02d" % (h, m, s)
 
-    def _send(self, type, payload):
+    def _send(self, notification_type, payload):
         headers = {
             'Content-type': 'application/x-www-form-urlencoded; charset=UTF-8',
         }
@@ -30,10 +30,10 @@ class Slack(BackupNotification):
         try:
             f = urllib2.urlopen(req)
             response = f.read()
-            logging.info('Sent %s notification via Slack.' % type)
+            logging.info('Sent %s notification via Slack.' % notification_type)
         except urllib2.HTTPError, error:
             contents = error.read()
-            logging.error('Unable to send Slack %s notification: ' % type + contents)
+            logging.error('Unable to send Slack %s notification: ' % notification_type + contents)
 
     def notify_start(self, source, hostname):
         data = {
@@ -44,12 +44,11 @@ class Slack(BackupNotification):
         self._send('start', data)
 
     def notify_success(self, source, hostname, filename, stats):
-        filesize = stats.getSizeDescription()
         data = {
             'username': 'Backup Agent',
             'icon_emoji': ':+1:',
             'text': "Backup of '%s' (%s) on '%s' was successful [size: %s].\nTimes: backup %s, dump %s" %
-                    (source.name, source.type, hostname, filesize,
+                    (source.name, source.type, hostname, stats.getSizeDescription(),
                      Slack.pretty_print(stats.dumptime), Slack.pretty_print(stats.uploadtime)),
         }
         self._send('success', data)

@@ -28,18 +28,18 @@ class RDS(MySQL):
         self.instance_class = "db.m1.small"
         if 'instance_class' in config:
             self.instance_class = config['instance_class']
-        # These are optional if using a .boto, however, allow users to override
+        # These are optional if using a .boto file, however, allow users to override.
         self.credentials = 'credentials' in config
         if self.credentials:
-            if 'aws_access_key_id' in config['credentials']:
-                self.aws_key = config['credentials']['aws_access_key_id']
-            if 'aws_secret_access_key' in config['credentials']:
-                self.aws_key = config['credentials']['aws_secret_access_key']
+            self.aws_key = config['credentials']['aws_access_key_id']
+            self.aws_key = config['credentials']['aws_secret_access_key']
 
     def _connect_with_boto(self):
-        return boto.rds.connect_to_region(self.rds_region)
-            # aws_access_key_id=self.aws_key,
-            # aws_secret_access_key=self.aws_secret)
+        kwargs = dict()
+        if self.credentials:
+            kwargs['aws_access_key'] = self.aws_key
+            kwargs['aws_secret_access_key'] = self.self.aws_secret
+        return boto.rds.connect_to_region(self.rds_region, **kwargs)
 
     def dump(self):
         # Identify the most recent snapshot for the given instancename
