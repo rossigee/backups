@@ -59,7 +59,7 @@ class BackupRunInstance:
             try:
                 # Dump and compress
                 starttime = time.time()
-                dumpfiles = source.dump_and_compress()
+                dumpfiles = source.dump_and_compress(self.stats)
                 if not isinstance(dumpfiles, list):
                     dumpfiles = [dumpfiles, ]
                 endtime = time.time()

@@ -16,6 +16,7 @@ class S3(BackupDestination):
         BackupDestination.__init__(self, config)
         self.bucket = config['bucket']
         self.region = config['region']
+
         self.aws_key = config['credentials']['aws_access_key_id']
         self.aws_secret = config['credentials']['aws_secret_access_key']
 

@@ -47,9 +47,9 @@ class Slack(BackupNotification):
         data = {
             'username': 'Backup Agent',
             'icon_emoji': ':+1:',
-            'text': "Backup of '%s' (%s) on '%s' was successful [size: %s].\nTimes: backup %s, dump %s" %
-                    (source.name, source.type, hostname, stats.getSizeDescription(),
-                     Slack.pretty_print(stats.dumptime), Slack.pretty_print(stats.uploadtime)),
+            'text': "Backup of '%s' (%s) on '%s' was successful [size: %s] in %s [backup %s, encrypt %s, upload %s]." %
+                    (source.name, source.type, hostname, stats.getSizeDescription(), Slack.pretty_print(stats.dumptime + stats.uploadtime),
+                     Slack.pretty_print(stats.dumptime_dump), Slack.pretty_print(stats.dumptime_encrypt), Slack.pretty_print(stats.uploadtime)),
         }
         self._send('success', data)
 
@@ -60,4 +60,3 @@ class Slack(BackupNotification):
             'text': "Backup of '%s' (%s) on '%s' failed: %s" % (source.name, source.type, hostname, str(e)),
         }
         self._send('failure', data)
-
