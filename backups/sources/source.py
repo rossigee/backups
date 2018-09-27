@@ -1,6 +1,7 @@
 import os
 import time
 
+import backups.compress
 import backups.encrypt
 
 
@@ -18,8 +19,8 @@ class BackupSource:
         if 'tmpdir' in config:
             self.tmpdir = config['tmpdir']
         self.compress = False
-        if 'compress' in config:
-            self.compress = config['compress'] == 1
+        if 'compress_only' in config:
+            self.compress = config['compress_only'] == 1
 
     def dump_and_compress(self, stats):
         d_starttime = time.time()
@@ -36,8 +37,8 @@ class BackupSource:
                 compressed_filename = backups.compress.compress(filename)
             else:
                 compressed_filename = backups.encrypt.encrypt(filename, self.passphrase)
+                os.unlink(filename)
             compressed_files.append(compressed_filename)
-            os.unlink(filename)
         e_endtime = time.time()
         stats.dumptime_encrypt = e_endtime - e_starttime
         return compressed_files

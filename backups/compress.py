@@ -5,10 +5,10 @@ from backups.exceptions import BackupException
 
 def compress(filename):
     logging.info("Compressing '%s'..." % filename)
-    compfilename = '%s.gzip' % filename
+    compfilename = '%s.gz' % filename
     comperrsname = '%s.err' % filename
     comperrs = open(comperrsname, 'wb')
-    compargs = ['gzip', '--fast', filename]
+    compargs = ['gzip', '-f', '--fast', filename]
     compproc1 = subprocess.Popen(compargs, stdin=subprocess.PIPE, stderr=comperrs)
     compproc1.wait()
     comperrs.close()
