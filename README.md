@@ -41,6 +41,10 @@ Backups will be encrypted with a given passphrase (using GnuPG), and put into a 
 
 If the backup configuration specifies a retention policy, then any copies that exist on the backup destination that fall outside that scope are deleted. Typically, a retention policy will specify to keep a copies for a certain number of days, or just a number of the most recent copies.
 
+If encryption is not needed or desired, you may specify that only compression is used. Note that this will not safeguard the contents of the file should someone gain access to it. Compression is performed using gzip --fast and can be specfied in the source configuration using...
+
+    "compress_only": 1 
+
 Also, a word to the wise about scheduling. Backing up large chunks of data can use a lot of resources, and even if set to run after 'work' hours, can often run for on into the morning and indeed the next working day. Break larger backups down into smaller chunks where possible. If you are backing up mission criticial servers over mission critical network connections, you may need to take additional precautions to ensure that your backup scripts are not going to cause knock-on problems. You have been warned.
 
 For security purposes, the script is designed to run as a non-privileged user. By default, it expects to be run as the 'backups' user, but this can be overridden using the 'RUN_AS_USER' environment variable.
@@ -167,7 +171,8 @@ The 'modules' paramter must contain the `backups.sources.mysql` module and there
   "dbname": "livecompany",
   "dbuser": "backups",
   "dbpass": "zzzuserwithreadonlyperms",
-  "passphrase": "64b0c7405f2d8051e2b9f02aa4898acc"
+  "passphrase": "64b0c7405f2d8051e2b9f02aa4898acc",
+  "compress_only": 1
 }
 ```
 
