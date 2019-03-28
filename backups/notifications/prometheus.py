@@ -1,4 +1,3 @@
-import urllib, urllib2
 import os, os.path
 import json
 import logging

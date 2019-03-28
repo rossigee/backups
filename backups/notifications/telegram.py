@@ -1,6 +1,8 @@
-import urllib, urllib2
 import os, os.path
 import json
+import requests
+import urllib
+
 import logging
 
 from backups.exceptions import BackupException
@@ -23,12 +25,11 @@ class Telegram(BackupNotification):
             'text': message
         })
         try:
-            f = urllib2.urlopen(url, data)
-            response = f.read()
+            r = requests.post(url, data=data)
+            r.raise_for_status()
             logging.info("Sent success notification via Telegram.")
-        except urllib2.HTTPError, error:
-            contents = error.read()
-            logging.error("Unable to send Telegram success notification: " + contents)
+        except requests.exceptions.HTTPError as err:
+            logging.error("Unable to send Telegram success notification: " + err)
 
     def notify_failure(self, source, hostname, e):
         message = "Backup of '%s' (%s) on '%s' failed: %s" % (source.name, source.type, hostname, str(e)),
@@ -38,9 +39,8 @@ class Telegram(BackupNotification):
             'text': message
         })
         try:
-            f = urllib2.urlopen(url, data)
-            response = f.read()
+            r = requests.post(url, data=data)
+            r.raise_for_status()
             logging.info("Sent failure notification via Telegram.")
-        except urllib2.HTTPError, error:
-            contents = error.read()
-            logging.error("Unable to send Telegram failure notification: " + contents)
+        except requests.exceptions.HTTPError as err:
+            logging.error("Unable to send Telegram failure notification: " + err)

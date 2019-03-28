@@ -1,6 +1,7 @@
-import urllib, urllib2
 import os, os.path
 import json
+import requests
+
 import logging
 
 from backups.exceptions import BackupException
@@ -22,18 +23,12 @@ class Slack(BackupNotification):
         return "%d:%02d:%02d" % (h, m, s)
 
     def _send(self, notification_type, payload):
-        headers = {
-            'Content-type': 'application/x-www-form-urlencoded; charset=UTF-8',
-        }
-        data = urllib.urlencode({'payload': json.dumps(payload)})
-        req = urllib2.Request(self.url, data, headers)
         try:
-            f = urllib2.urlopen(req)
-            response = f.read()
-            logging.info('Sent %s notification via Slack.' % notification_type)
-        except urllib2.HTTPError, error:
-            contents = error.read()
-            logging.error('Unable to send Slack %s notification: ' % notification_type + contents)
+            r = requests.post(self.url, data=payload)
+            r.raise_for_status()
+            logging.info("Sent failure notification via Slack.")
+        except requests.exceptions.HTTPError as err:
+            logging.error("Unable to send Slack failure notification: " + err)
 
     def notify_start(self, source, hostname):
         data = {
