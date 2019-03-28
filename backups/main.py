@@ -101,7 +101,7 @@ class BackupRunInstance:
 def main():
     try:
         # Make doubly sure temp files aren't world-viewable
-        os.umask(077)
+        os.umask(int('077', 8))
 
         # Read command line arguments
         parser = argparse.ArgumentParser()

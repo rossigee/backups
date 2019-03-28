@@ -11,7 +11,7 @@ def encrypt(filename, passphrase):
     encerrs = open(encerrsname, 'wb')
     encargs = ['gpg', '--batch', '--yes', '-q', '--passphrase-fd', '0', '-c', filename]
     encproc1 = subprocess.Popen(encargs, stdin=subprocess.PIPE, stdout=encfile, stderr=encerrs)
-    encproc1.communicate(passphrase)
+    encproc1.communicate(passphrase.encode('utf8'))
     #if encproc1.stdout:
     #    encproc1.stdout.close()
     encproc1.wait()

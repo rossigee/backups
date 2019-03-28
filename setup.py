@@ -8,7 +8,8 @@ setup(name = 'backups',
     url = 'https://github.com/rossigee/backups',
     packages = ['backups', 'backups.sources', 'backups.destinations', 'backups.notifications'],
     install_requires = [
-        'requests'
+        'requests',
+        'python-dateutil'
     ],
     entry_points = {
         'console_scripts': [

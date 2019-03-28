@@ -1,4 +1,4 @@
-import urllib, urllib2
+import requests
 import json
 import logging
 
@@ -20,12 +20,17 @@ class Matrix(BackupNotification):
         headers = {
             'Content-type': 'application/json; charset=UTF-8',
         }
-        data = {
+        payload = {
             'msgtype': 'm.text',
             'body': text,
         }
-        req = urllib2.Request(self.url, data=json.dumps(data), headers=headers)
-        return urllib2.urlopen(req)
+
+        r = requests.post(self.url, data=json.dumps(payload), headers=headers)
+        if r.status_code != 200:
+            print(r.text)
+            raise Exception("Unexpected HTTP status code: {}".format(r.status_code))
+
+        return r.text
 
     def notify_success(self, source, hostname, filename, stats):
         filesize = stats.getSizeDescription()
@@ -33,7 +38,7 @@ class Matrix(BackupNotification):
         try:
             f = self._msg(text)
             logging.info("Sent success notification via Matrix.")
-        except urllib2.HTTPError, error:
+        except Exception as error:
             contents = error.read()
             logging.error("Unable to send Matrix success notification: " + contents)
 
@@ -42,6 +47,6 @@ class Matrix(BackupNotification):
         try:
             f = self._msg(text)
             logging.info("Sent failure notification via Matrix.")
-        except urllib2.HTTPError, error:
+        except Exception as error:
             contents = error.read()
             logging.error("Unable to send Matrix failure notification: " + contents)

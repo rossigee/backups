@@ -27,7 +27,7 @@ class BackupSource:
         filenames = self.dump()
         d_endtime = time.time()
         stats.dumptime_dump = d_endtime - d_starttime
-        if isinstance(filenames, basestring):
+        if isinstance(filenames, str):
             filenames = [filenames, ]
         compressed_files = []
 
