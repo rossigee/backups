@@ -38,7 +38,7 @@ class RDS(MySQL):
         kwargs = dict()
         if self.credentials:
             kwargs['aws_access_key'] = self.aws_key
-            kwargs['aws_secret_access_key'] = self.self.aws_secret
+            kwargs['aws_secret_access_key'] = self.aws_secret
         return boto.rds.connect_to_region(self.rds_region, **kwargs)
 
     def dump(self):
