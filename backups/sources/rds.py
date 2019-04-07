@@ -31,14 +31,14 @@ class RDS(MySQL):
         # These are optional if using a .boto file, however, allow users to override.
         self.credentials = 'credentials' in config
         if self.credentials:
-            self.aws_key = config['credentials']['aws_access_key_id']
-            self.aws_key = config['credentials']['aws_secret_access_key']
+            self.aws_access_key = config['credentials']['aws_access_key_id']
+            self.aws_secret_key = config['credentials']['aws_secret_access_key']
 
     def _connect_with_boto(self):
         kwargs = dict()
         if self.credentials:
-            kwargs['aws_access_key'] = self.aws_key
-            kwargs['aws_secret_access_key'] = self.aws_secret
+            kwargs['aws_access_key_id'] = self.aws_access_key
+            kwargs['aws_secret_access_key'] = self.aws_secret_key
         return boto.rds.connect_to_region(self.rds_region, **kwargs)
 
     def dump(self):
