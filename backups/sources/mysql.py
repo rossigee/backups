@@ -30,7 +30,7 @@ class MySQL(BackupSource):
             credsfilename = self.defaults
         elif self.dbuser is not None:
             credsfilename = '%s/%s.my.cnf' % (self.tmpdir, self.id)
-            credsfile = open(credsfilename, 'wb')
+            credsfile = open(credsfilename, 'w')
             credsfile.write(
                 "[client]\n" \
                 "host=%s\n" \
