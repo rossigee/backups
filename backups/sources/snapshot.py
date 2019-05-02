@@ -1,7 +1,6 @@
 import os, os.path
 import subprocess
-import boto.rds
-import boto.ec2
+import boto3
 import logging
 import datetime
 import json
@@ -17,8 +16,15 @@ class Snapshot(BackupSource):
         self.vol = config['volume_id']
         self.datestr = datetime.datetime.utcnow().strftime("%Y-%m-%d")
         self.az = config['availability_zone']
-        self.aws_key = config['credentials']['aws_access_key_id']
-        self.aws_secret = config['credentials']['aws_secret_access_key']
+        self.aws_access_key = config['credentials']['aws_access_key_id']
+        self.aws_secret_key = config['credentials']['aws_secret_access_key']
+
+    def _connect_with_boto(self, service_name):
+        kwargs = dict()
+        if self.credentials:
+            kwargs['aws_access_key_id'] = self.aws_access_key
+            kwargs['aws_secret_access_key'] = self.aws_secret_key
+        return boto3.client(service_name, **kwargs)
 
     def dump(self):
         retval = self.snapshot()
@@ -41,13 +47,15 @@ class RDSSnapshot(Snapshot):
         Snapshot.__init__(self, backup_id, config)
 
     def snapshot(self):
+        client = self._connect_with_boto("rds")
+
         logging.info("Snapshotting RDS volume %s in %s..." % (self.name, self.az))
-        rdsconn = boto.rds.connect_to_region(self.az,
-            aws_access_key_id=self.aws_key,
-            aws_secret_access_key=self.aws_secret)
-        instances = rdsconn.get_all_dbinstances(self.vol)
-        db = instances[0]
-        return db.snapshot('%s-%s' % (self.id, self.datestr))
+        response = client.create_db_snapshot(
+            DBSnapshotIdentifier='%s-%s' % (self.id, self.datestr),
+            DBInstanceIdentifier=self.vol
+        )
+        # TODO: response handling
+        print(reponse)
 
 class EC2Snapshot(Snapshot):
     def __init__(self, backup_id, config):
@@ -56,8 +64,10 @@ class EC2Snapshot(Snapshot):
         Snapshot.__init__(self, backup_id, config)
 
     def snapshot(self):
+        client = self._connect_with_boto("ec2")
+
         logging.info("Snapshotting EC2 volume %s in %s..." % (self.name, self.az))
-        ec2conn = boto.ec2.connect_to_region(self.az,
-            aws_access_key_id=self.aws_key,
-            aws_secret_access_key=self.aws_secret)
-        return ec2conn.create_snapshot(self.vol, "%s (%s)" % (self.name, self.datestr))
+        instance = client.Instance(self.vol)
+        image = instance.create_image(Name="%s (%s)" % (self.name, self.datestr))
+        # TODO: response handling
+        print(image)

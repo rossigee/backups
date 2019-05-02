@@ -3,9 +3,10 @@ import subprocess
 import logging
 import datetime
 
-import boto
+from google.cloud import storage
+from google.api_core.exceptions import BadRequest
+
 from dateutil import parser, tz
-import gcs_oauth2_boto_plugin
 
 from backups.exceptions import BackupException
 from backups.destinations import backupdestination
@@ -15,6 +16,8 @@ from backups.destinations.destination import BackupDestination
 class GS(BackupDestination):
     def __init__(self, config):
         BackupDestination.__init__(self, config)
+        # TODO: Finish this off...
+        self.gcs_creds_path = config['gcs_creds_path']
         self.bucket = config['bucket']
 
     def send(self, id, name, filename):
@@ -37,8 +40,8 @@ class GS(BackupDestination):
         gslocation = "gs://%s/%s" % (self.bucket, id)
         logging.info("Clearing down older '%s' backups from GS (%s)..." % (name, gslocation))
 
-        uri = boto.storage_uri(self.bucket, 'gs')
-        bucket = uri.get_bucket()
+        client = storage.Client.from_service_account_json(self.gcs_creds_path)
+        bucket = client.get_bucket(self.bucket)
 
         # Gather list of potentials first
         candidates = []

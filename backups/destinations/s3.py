@@ -2,7 +2,7 @@ import os, os.path
 import subprocess
 import logging
 
-import boto.s3
+import boto3
 
 import dateutil.parser
 
@@ -45,10 +45,8 @@ class S3(BackupDestination):
         logging.info("Clearing down older '%s' backups from S3 (%s)..." % (name, s3location))
 
         # Gather list of potentials first
-        s3conn = boto.s3.connect_to_region(self.region,
-            aws_access_key_id=self.aws_key,
-            aws_secret_access_key=self.aws_secret)
-        bucket = s3conn.get_bucket(self.bucket)
+        s3 = boto3.resource('s3')
+        bucket = s3.Bucket(self.bucket)
         candidates = []
         for key in bucket.list(prefix="%s/" % id):
             parsed_date = dateutil.parser.parse(key.last_modified)

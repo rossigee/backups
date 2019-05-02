@@ -4,7 +4,7 @@ import logging
 import random
 import time
 
-import boto.rds
+import boto3
 
 import backups.encrypt
 
@@ -39,12 +39,12 @@ class RDS(MySQL):
         if self.credentials:
             kwargs['aws_access_key_id'] = self.aws_access_key
             kwargs['aws_secret_access_key'] = self.aws_secret_key
-        return boto.rds.connect_to_region(self.rds_region, **kwargs)
+        return boto3.client('rds', **kwargs)
 
     def dump(self):
         # Identify the most recent snapshot for the given instancename
-        conn = self._connect_with_boto()
-        snapshots = conn.get_all_dbsnapshots()
+        client = self._connect_with_boto()
+        snapshots = client.get_all_dbsnapshots()
         suitable = []
         prefix = "DBSnapshot:rds:%s" % self.instancename
         for i in snapshots:
@@ -58,7 +58,7 @@ class RDS(MySQL):
 
         # Restore a copy of the snapshot
         instance_id = "tmp-%s-%s" % (self.instancename, random.randint(10000, 99999))
-        dbinstance = conn.restore_dbinstance_from_dbsnapshot(snapshot_id, instance_id, self.instance_class)
+        dbinstance = client.restore_dbinstance_from_dbsnapshot(snapshot_id, instance_id, self.instance_class)
         logging.info("Started RDS instance '%s'..." % instance_id)
         while dbinstance.status not in ('available', 'stopped'):
             logging.debug("Waiting for RDS instance (%s)..." % dbinstance.status)
