@@ -62,8 +62,8 @@ class MySQL(BackupSource):
                 for dbname in self.dbname.split():
                     dumpargs.append(dbname)
             dumpproc1 = subprocess.Popen(dumpargs, stdout=dumpfile, stderr=subprocess.PIPE)
-            if dumpproc1.stdout:
-                dumpproc1.stdout.close()
+            if dumpproc1.stdin:
+                dumpproc1.stdin.close()
             dumpproc1.wait()
             exitcode = dumpproc1.returncode
             errmsg = dumpproc1.stderr.read()
