@@ -49,6 +49,6 @@ class Samba(BackupDestination):
         finally:
             os.unlink(credsfilename)
 
-    def cleanup(self, id, name, suffix, stats):
+    def cleanup(self, id, name, stats):
         logging.warn("Retention control not implemented for Samba destinations yet (PRs welcome!)")
         return
