@@ -40,17 +40,25 @@ class S3(BackupDestination):
         if exitcode != 0:
             raise BackupException("Error while uploading: %s" % errmsg)
 
+
+    def _boto_kwargs(self):
+        kwargs = dict()
+        if self.aws_key:
+            kwargs['aws_access_key_id'] = self.aws_key
+            kwargs['aws_secret_access_key'] = self.aws_secret
+        return kwargs
+
     def cleanup(self, id, name, stats):
         s3location = "s3://%s/%s" % (self.bucket, id)
         logging.info("Clearing down older '%s' backups from S3 (%s)..." % (name, s3location))
 
         # Gather list of potentials first
-        s3 = boto3.resource('s3')
+        kwargs = self._boto_kwargs()
+        s3 = boto3.resource('s3', **kwargs)
         bucket = s3.Bucket(self.bucket)
         candidates = []
-        for key in bucket.list(prefix="%s/" % id):
-            parsed_date = dateutil.parser.parse(key.last_modified)
-            candidates.append([parsed_date, key.name])
+        for obj in bucket.objects.filter(Prefix="%s/" % id):
+            candidates.append([obj.last_modified, obj.key])
         candidates.sort()
 
         # Loop and purge unretainable copies
@@ -66,7 +74,8 @@ class S3(BackupDestination):
                     removable_names.append(name)
         for name in removable_names:
             logging.info("Removing '%s'..." % name)
-            bucket.get_key(name).delete()
+            obj = s3.Object(bucket_name=self.bucket, key=name)
+            obj.delete()
 
         # Return number of copies left
         stats.retained_copies = len(candidates) - len(removable_names)
