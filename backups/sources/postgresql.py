@@ -23,7 +23,7 @@ class PostgreSQL(BackupSource):
     def dump(self):
         # Create temporary credentials file
         credsfilename = '%s/%s.pgpass' % (self.tmpdir, self.id)
-        with open(credsfilename, 'wb') as credsfile:
+        with open(credsfilename, 'w') as credsfile:
             credsfile.write(
                 "%s:%s:%s:%s:%s\n" % \
                 (self.dbhost, '5432', self.dbname, self.dbuser, self.dbpass)
