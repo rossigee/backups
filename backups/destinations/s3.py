@@ -17,8 +17,11 @@ class S3(BackupDestination):
         self.bucket = config['bucket']
         self.region = config['region']
 
-        self.aws_key = config['credentials']['aws_access_key_id']
-        self.aws_secret = config['credentials']['aws_secret_access_key']
+        self.aws_key = None
+        self.aws_secret = None
+        if 'credentials' in config:
+            self.aws_key = config['credentials']['aws_access_key_id']
+            self.aws_secret = config['credentials']['aws_secret_access_key']
 
     def send(self, id, name, filename):
         s3location = "s3://%s/%s/%s/%s" % (
@@ -30,9 +33,10 @@ class S3(BackupDestination):
 
         uploadargs = ['aws', 's3', 'cp', '--only-show-errors', filename, s3location]
         uploadenv = os.environ.copy()
-        uploadenv['AWS_ACCESS_KEY_ID'] = self.aws_key
-        uploadenv['AWS_SECRET_ACCESS_KEY'] = self.aws_secret
-        uploadenv['AWS_DEFAULT_REGION'] = self.region
+        if self.aws_key:
+            uploadenv['AWS_ACCESS_KEY_ID'] = self.aws_key
+            uploadenv['AWS_SECRET_ACCESS_KEY'] = self.aws_secret
+            uploadenv['AWS_DEFAULT_REGION'] = self.region
         uploadproc = subprocess.Popen(uploadargs, stderr=subprocess.PIPE, env=uploadenv)
         uploadproc.wait()
         exitcode = uploadproc.returncode
