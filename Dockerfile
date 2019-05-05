@@ -10,10 +10,11 @@ RUN apk add --no-cache \
     zip unzip \
     supervisor
 
+
 # Install Jobber app binary for scheduling
-RUN curl -sLO https://github.com/dshearer/jobber/releases/download/v1.3.2/jobber-1.3.2-r0_alpine3.6and3.7.apk && \
-    apk add --allow-untrusted jobber-1.3.2-r0_alpine3.6and3.7.apk; \
-    rm -f jobber-1.3.2-r0_alpine3.6and3.7.apk
+RUN curl -sLO https://github.com/dshearer/jobber/releases/download/v1.3.4/jobber-1.3.4-r0.apk && \
+    apk add --allow-untrusted jobber-1.3.4-r0.apk; \
+    rm -f jobber-1.3.4-r0.apk
 
 # Install main python packages required
 RUN pip3 install \
