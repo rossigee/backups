@@ -33,7 +33,7 @@ class S3(BackupDestination):
 
         uploadargs = ['aws', 's3', 'cp', '--only-show-errors', filename, s3location]
         uploadenv = os.environ.copy()
-        if self.aws_key:
+        if self.aws_key is not None:
             uploadenv['AWS_ACCESS_KEY_ID'] = self.aws_key
             uploadenv['AWS_SECRET_ACCESS_KEY'] = self.aws_secret
             uploadenv['AWS_DEFAULT_REGION'] = self.region
@@ -44,10 +44,9 @@ class S3(BackupDestination):
         if exitcode != 0:
             raise BackupException("Error while uploading: %s" % errmsg)
 
-
     def _boto_kwargs(self):
         kwargs = dict()
-        if self.aws_key:
+        if self.aws_key is not None:
             kwargs['aws_access_key_id'] = self.aws_key
             kwargs['aws_secret_access_key'] = self.aws_secret
         return kwargs
