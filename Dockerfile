@@ -12,13 +12,13 @@ RUN apk add --no-cache \
 
 
 # Install Jobber app binary for scheduling
-RUN curl -sLO https://github.com/dshearer/jobber/releases/download/v1.3.4/jobber-1.3.4-r0.apk && \
-    apk add --allow-untrusted jobber-1.3.4-r0.apk; \
-    rm -f jobber-1.3.4-r0.apk
+RUN curl -sLO https://github.com/dshearer/jobber/releases/download/v1.4.0/jobber-1.4.0-r0.apk && \
+    apk add --allow-untrusted jobber-1.4.0-r0.apk; \
+    rm -f jobber-1.4.0-r0.apk
 
 # Install main python packages required
 RUN pip3 install \
-    git+https://github.com/rossigee/backups \
+    git+https://github.com/rossigee/backups@master \
     awscli \
     boto3 \
     prometheus_client
