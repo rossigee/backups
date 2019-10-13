@@ -1,3 +1,4 @@
+import os
 import subprocess
 import logging
 
@@ -10,7 +11,8 @@ def encrypt(filename, passphrase):
     encfile = open(encfilename, 'wb')
     encerrs = open(encerrsname, 'wb')
     encargs = ['gpg', '--batch', '--yes', '-q', '--passphrase-fd', '0', '-c', filename]
-    encproc1 = subprocess.Popen(encargs, stdin=subprocess.PIPE, stdout=encfile, stderr=encerrs)
+    encenv = os.environ.copy()
+    encproc1 = subprocess.Popen(encargs, stdin=subprocess.PIPE, stdout=encfile, stderr=encerrs, env=encenv)
     encproc1.communicate(passphrase.encode('utf8'))
     #if encproc1.stdout:
     #    encproc1.stdout.close()
