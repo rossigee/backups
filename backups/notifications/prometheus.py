@@ -38,6 +38,8 @@ class Prometheus(BackupNotification):
         def auth_handler(url, method, timeout, headers, data):
             return basic_auth_handler(url, method, timeout, headers, data, self.username, self.password)
 
-        push_to_gateway(self.url, job=source.id, registry=registry, handler=auth_handler)
-
-        logging.info("Pushed metrics for job '%s' to gateway (%s)" % (source.id, self.url))
+        try:
+            push_to_gateway(self.url, job=source.id, registry=registry, handler=auth_handler)
+            logging.info("Pushed metrics for job '%s' to gateway (%s)" % (source.id, self.url))
+        except Exception as e:
+            logging.error("Unable to push metrics for job '%s' to gateway (%s): %s" % (source.id, self.url, str(e)))
