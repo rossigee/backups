@@ -11,9 +11,11 @@ Roughly speaking there are 'sources', 'destinations' and 'notifications'.
 Currently implemented sources are:
 
 * folders (using tar)
-* MySQL databases (using mysqldump).
-* RDS database snapshots (using mysqldump).
-* PostgreSQL databases (using pg_dump).
+* folders via SSH (using tar)
+* MySQL databases (using mysqldump)
+* MySQL databases via SSH (using mysqldump)
+* RDS database snapshots (using mysqldump)
+* PostgreSQL databases (using pg_dump)
 
 Currently implemented destinations are:
 
@@ -43,7 +45,7 @@ If the backup configuration specifies a retention policy, then any copies that e
 
 If encryption is not needed or desired, you may specify that only compression is used. Note that this will not safeguard the contents of the file should someone gain access to it. Compression is performed using gzip --fast and can be specfied in the source configuration using...
 
-    "compress_only": 1 
+    "compress_only": 1
 
 Also, a word to the wise about scheduling. Backing up large chunks of data can use a lot of resources, and even if set to run after 'work' hours, can often run for on into the morning and indeed the next working day. Break larger backups down into smaller chunks where possible. If you are backing up mission criticial servers over mission critical network connections, you may need to take additional precautions to ensure that your backup scripts are not going to cause knock-on problems. You have been warned.
 
@@ -379,7 +381,7 @@ You can specify a GS bucket to back up to.
 ```
 
 The 'gs' destination module uses the boto library in conjunction with 'gsutil.' The 'gsutil' CLI client gets it's authentication credentials and other configuration from the 'backups' user's '~/.boto' file.
- 
+
 The GS module requires a GCP service account to be created with appropriate permissions to write and delete from GS buckets. The key file needs to be in P12 format. IMPORTANT: Properly secure this file and related information.
 
 More information on configuring gsutil and boto as well as preparing a service account can be found at https://cloud.google.com/storage/docs/boto-plugin.
