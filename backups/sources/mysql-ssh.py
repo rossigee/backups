@@ -31,7 +31,7 @@ class MySQLSSH(BackupSource):
         dumpfile = open(dumpfilename, 'wb')
         dumpargs = [
             'ssh', ('%s@%s' % (self.sshuser, self.sshhost)),
-            'mysqldump', ('--host=%s' % self.dbhost), ('--user=%s' % self.dbuser), ('--pass=%s' % self.dbpass), '-R']
+            'mysqldump', ('--host=%s' % self.dbhost), ('--user=%s' % self.dbuser), ('--password=%s' % self.dbpass), '-R']
         if not 'noevents' in dir(self) or not self.noevents:
             dumpargs.append('--events')
         all_databases = False
@@ -45,12 +45,15 @@ class MySQLSSH(BackupSource):
             dumpargs.append('--databases')
             for dbname in self.dbname.split():
                 dumpargs.append(dbname)
+        logging.debug("Running '%s'" % (" ".join(dumpargs)))
         dumpproc1 = subprocess.Popen(dumpargs, stdout=dumpfile, stderr=subprocess.PIPE)
         if dumpproc1.stdin:
             dumpproc1.stdin.close()
         dumpproc1.wait()
         exitcode = dumpproc1.returncode
         errmsg = dumpproc1.stderr.read()
+        if errmsg != b'':
+            logging.error(errmsg)
         if exitcode != 0:
             raise BackupException("Error while dumping: %s" % errmsg)
         dumpfile.close()

@@ -26,18 +26,21 @@ class FolderSSH(BackupSource):
         tarfile = open(tarfilename, 'wb')
         dumpargs = [
             'ssh', ('%s@%s' % (self.sshuser, self.sshhost)),
-            'tar', 'cf', tarfilename, "-C", self.path
+            'tar', 'cC', self.path
         ]
         for exclude in self.excludes:
             dumpargs.append('--exclude')
             dumpargs.append(exclude)
         dumpargs.append(".")
+        logging.debug("Running '%s'" % (" ".join(dumpargs)))
         dumpproc1 = subprocess.Popen(dumpargs, stdout=tarfile, stderr=subprocess.PIPE)
         if dumpproc1.stdin:
             dumpproc1.stdin.close()
         dumpproc1.wait()
         exitcode = dumpproc1.returncode
         errmsg = dumpproc1.stderr.read()
+        if errmsg != b'':
+            logging.error(errmsg)
         if exitcode == 2:
             raise BackupException("Error while dumping: %s" % errmsg)
         tarfile.close()
