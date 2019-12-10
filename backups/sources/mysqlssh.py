@@ -8,8 +8,8 @@ from backups.exceptions import BackupException
 
 @backupsource('mysql-ssh')
 class MySQLSSH(BackupSource):
-    def __init__(self, config):
-        BackupSource.__init__(self, config, "MySQLSSH", "sql.gpg")
+    def __init__(self, config, type="MySQLSSH"):
+        BackupSource.__init__(self, config, type, "sql.gpg")
         self.__common_init__(config)
 
     def __common_init__(self, config):

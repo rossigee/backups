@@ -8,8 +8,8 @@ from backups.exceptions import BackupException
 
 @backupsource('folder-ssh')
 class FolderSSH(BackupSource):
-    def __init__(self, config):
-        BackupSource.__init__(self, config, "FolderSSH", "tar.gpg")
+    def __init__(self, config, type="FolderSSH"):
+        BackupSource.__init__(self, config, type, "tar.gpg")
         self.__common_init__(config)
 
     def __common_init__(self, config):

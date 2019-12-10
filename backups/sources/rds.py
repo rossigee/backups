@@ -15,8 +15,8 @@ from backups.sources.mysql import MySQL
 
 @backupsource('rds')
 class RDS(MySQL):
-    def __init__(self, config):
-        BackupSource.__init__(self, config, "RDS", "sql.gpg")
+    def __init__(self, config, type="RDS"):
+        BackupSource.__init__(self, config, type, "sql.gpg")
         self.__common_init__(config)
 
     def __common_init__(self, config):

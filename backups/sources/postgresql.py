@@ -8,8 +8,8 @@ from backups.exceptions import BackupException
 
 @backupsource('pgsql')
 class PostgreSQL(BackupSource):
-    def __init__(self, config):
-        BackupSource.__init__(self, config, "PostgreSQL", "sql.gpg")
+    def __init__(self, config, type="PostgreSQL"):
+        BackupSource.__init__(self, config, type, "sql.gpg")
         self.__common_init__(config)
 
     def __common_init__(self, config):
