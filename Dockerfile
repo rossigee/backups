@@ -2,19 +2,13 @@ FROM alpine:latest
 
 # Install main O/S applications required
 RUN apk add --no-cache \
-    curl git rsync vim sudo \
+    curl git vim \
     python3 py3-pip \
+    openssh-client \
     mariadb-client \
     postgresql-client postgresql \
     gnupg \
-    zip unzip \
-    supervisor
-
-
-# Install Jobber app binary for scheduling
-RUN curl -sLO https://github.com/dshearer/jobber/releases/download/v1.4.0/jobber-1.4.0-r0.apk && \
-    apk add --allow-untrusted jobber-1.4.0-r0.apk; \
-    rm -f jobber-1.4.0-r0.apk
+    zip unzip
 
 # Install main python packages required
 RUN pip3 install \
@@ -23,9 +17,3 @@ RUN pip3 install \
     boto3 \
     prometheus_client
 
-# Set up our custom notification handler
-#ADD /notify-webhook.sh /notify-webhook.sh
-#RUN chmod 755 /notify-webhook.sh
-
-# Run the scheduler
-CMD ["/usr/libexec/jobbermaster"]
