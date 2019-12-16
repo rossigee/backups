@@ -41,8 +41,9 @@ class FolderSSH(BackupSource):
         errmsg = dumpproc1.stderr.read()
         if errmsg != b'':
             logging.error(errmsg)
-        if exitcode == 2:
-            raise BackupException("Error while dumping: %s" % errmsg)
+        if exitcode > 1:
+            raise BackupException("Error while dumping (exitcode %d): %s" % (exitcode, errmsg))
+
         tarfile.close()
 
         return [tarfilename, ]
