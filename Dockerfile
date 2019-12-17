@@ -2,7 +2,7 @@ FROM alpine:latest
 
 # Install main O/S applications required
 RUN apk add --no-cache \
-    curl git vim \
+    curl git sudo vim \
     python3 py3-pip \
     openssh-client \
     mariadb-client \
