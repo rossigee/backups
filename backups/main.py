@@ -19,6 +19,7 @@ from backups.exceptions import BackupException
 
 # Default set of modules to import
 default_modules = [
+    'backups.sources.azure_managed_disk',
     'backups.sources.folder',
     'backups.sources.mysql',
     'backups.sources.postgresql',

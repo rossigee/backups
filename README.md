@@ -16,6 +16,7 @@ Currently implemented sources are:
 * MySQL databases via SSH (using mysqldump)
 * RDS database snapshots (using mysqldump)
 * PostgreSQL databases (using pg_dump)
+* Azure Managed Disks
 
 Currently implemented destinations are:
 
@@ -340,6 +341,45 @@ Parameters available in 'snapshot':
 | availability_zone | AWS availability zone. |
 | aws_access_key_id | AWS access key. |
 | aws_secret_access_key | AWS secret access key. |
+
+
+Source - Azure Managed Disks
+----------------------------
+
+This method uses the Azure API to create a snapshot of the specified managed disk.
+
+```json
+{
+  "id": "mydisk1",
+  "type": "azure-managed-disk",
+  "name": "My Disk 1",
+  "subscription_id": "285adaab-abcd-41cc-1234-9f256543d534",
+  "source_resource_group": "MC_KUBERNETES_AZURECLUSTER1_NORTHEUROPE",
+  "destination_resource_group": "MyBackupsResourceGroup",
+  "disk_name": "mydisk1",
+  "retain_snapshots": 3
+}
+```
+
+The `retain_snapshots` ensures that a certain number of recent snapshots are left on Azure.
+
+Parameters available in 'azure-managed-disk':
+
+| Config key | Purpose |
+|------------|---------|
+| subscription_id | The Azure subscription ID |
+| source_resource_group | The RG that the managed disk resides in |
+| destination_resource_group | The RG that the snapshot should be created in |
+| disk_name | The name of the managed disk in the source RG |
+| retain_snapshots | How many snapshots to leave in place on Azure |
+
+Additionally, the following environment variables must be defined for authentication (from AD service principal):
+
+| Env var | Description |
+|---------|-------------|
+| TENANT_ID | Azure Tenant ID |
+| CLIENT_ID | Azure client/app ID |
+| CLIENT_KEY | Azure client secret key |
 
 
 Destination - S3
