@@ -4,6 +4,8 @@ FROM alpine:latest
 RUN apk add --no-cache \
     curl git sudo vim \
     python3 py3-pip \
+    py3-boto \
+    py3-cryptography \
     openssh-client \
     mariadb-client \
     postgresql-client postgresql \
@@ -14,6 +16,7 @@ RUN apk add --no-cache \
 RUN pip3 install \
     git+https://github.com/rossigee/backups@master \
     awscli \
-    boto3 \
+    adal \
+    azure-mgmt-compute \
     prometheus_client
 
