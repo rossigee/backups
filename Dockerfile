@@ -4,7 +4,6 @@ FROM alpine:latest
 RUN apk add --no-cache \
     curl git sudo vim \
     python3 py3-pip \
-    py3-boto \
     py3-cryptography \
     openssh-client \
     mariadb-client \
@@ -15,6 +14,7 @@ RUN apk add --no-cache \
 # Install main python packages required
 RUN pip3 install \
     git+https://github.com/rossigee/backups@master \
+    boto3 \
     awscli \
     adal \
     azure-mgmt-compute \
