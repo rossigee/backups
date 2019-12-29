@@ -104,9 +104,8 @@ class LVMLogicalVolume(BackupSource):
                     raise BackupException("Error while removing snapshot ''%s' (exitcode %d): %s" % (lvm_id, exitcode, errmsg))
 
         # Stream volume down to a local file
-        logging.info("Downloading volume for snapshot '%s'..." % lvm_id)
+        logging.info("Downloading volume for snapshot '%s'..." % snapshot_id)
         dumpfilename = '%s/%s.dump' % (self.tmpdir, self.lv_name)
-        logging.info("Backing up '%s' (%s)..." % (self.name, self.type))
         dumpfile = open(dumpfilename, 'wb')
         dumpargs = [
             'ssh', ('%s@%s' % (self.sshuser, self.sshhost)),
