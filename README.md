@@ -382,6 +382,39 @@ Additionally, the following environment variables must be defined for authentica
 | CLIENT_KEY | Azure client secret key |
 
 
+Source - LVM over SSH
+---------------------
+
+This method calls LVM commands over SSH to obtain a snapshot of an LVM volume.
+
+```json
+{
+  "id": "mydisk1",
+  "type": "lvm-ssh",
+  "name": "My Disk 1",
+  "sshhost": "hostname.domain.com",
+  "sshuser": "root",
+  "vg_name": "ubuntu-vg",
+  "lv_name": "mydisk1",
+  "size": "5G",
+  "retain_snapshots": 3
+}
+```
+
+The `retain_snapshots` ensures that a certain number of snapshot volumes are retained on the host.
+
+Parameters available in 'lvm-ssh':
+
+| Config key | Purpose |
+|------------|---------|
+| sshhost | The hostname to SSH to |
+| sshuser | The username to SSH with |
+| vg_name | The volume group name |
+| lv_name | The logical volume name |
+| size | The logical volume size |
+| retain_snapshots | How many snapshot volumes to leave in place |
+
+
 Destination - S3
 ----------------
 
