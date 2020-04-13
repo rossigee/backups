@@ -62,6 +62,8 @@ class S3(BackupDestination):
 
         # Gather list of potentials first
         kwargs = self._boto_kwargs()
+        if self.endpoint_url is not None:
+            kwargs['endpoint_url'] = self.endpoint_url
         s3 = boto3.resource('s3', **kwargs)
         bucket = s3.Bucket(self.bucket)
         candidates = []
