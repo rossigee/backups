@@ -16,7 +16,9 @@ class S3(BackupDestination):
         BackupDestination.__init__(self, config)
         self.bucket = config['bucket']
         self.region = config['region']
-
+        self.endpoint_url = None
+        if 'endpoint_url' in config:
+            self.endpoint_url = config['endpoint_url']
         self.aws_key = None
         self.aws_secret = None
         if 'credentials' in config:
@@ -37,6 +39,9 @@ class S3(BackupDestination):
             uploadenv['AWS_ACCESS_KEY_ID'] = self.aws_key
             uploadenv['AWS_SECRET_ACCESS_KEY'] = self.aws_secret
             uploadenv['AWS_DEFAULT_REGION'] = self.region
+        if self.endpoint_url is not None:
+            uploadargs.insert(2, "--endpoint-url")
+            uploadargs.insert(3, self.endpoint_url)
         uploadproc = subprocess.Popen(uploadargs, stderr=subprocess.PIPE, env=uploadenv)
         uploadproc.wait()
         exitcode = uploadproc.returncode

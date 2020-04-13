@@ -440,6 +440,7 @@ Parameters available in 's3':
 | aws_secret_access_key | AWS secret access key. |
 | retention_copies | How many copies of older backups to keep. |
 | retention_days |  How many days of backups to keep. |
+| endpoint_url | (optional) Endpoint URL for S3 service |
 
 
 Destination - GS
