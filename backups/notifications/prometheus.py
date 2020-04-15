@@ -15,8 +15,11 @@ class Prometheus(BackupNotification):
     def __init__(self, config):
         BackupNotification.__init__(self, config, 'prometheus')
         self.url = config['url']
-        self.username = config['credentials']['username']
-        self.password = config['credentials']['password']
+        self.username = None
+        self.password = None
+        if 'credentials' in config:
+            self.username = config['credentials']['username']
+            self.password = config['credentials']['password']
         self.notify_on_success = True
         self.notify_on_failure = False
 
