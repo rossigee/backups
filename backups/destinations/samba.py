@@ -37,7 +37,7 @@ class Samba(BackupDestination):
                 suffix)
             basename = os.path.basename(filename)
             sambaurl = "smb://%s/%s%s/%s" % (self.sambahost, self.sambashare, sambafile)
-            logging.info("Uploading '%s' backup to Samba (%s)..." % (name, sambaurl))
+            logging.info("Uploading '%s' backup for '%s' to Samba (%s)..." % (name, self.id, sambaurl))
             sharething = "//%s/%s" % (self.sambahost, self.sambashare)
             command = "put %s %s" % (filename, sambafile)
             uploadargs = ['smbclient', '-A', self.authfile, sharething, '-c', command]

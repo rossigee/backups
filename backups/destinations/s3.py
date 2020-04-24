@@ -31,7 +31,7 @@ class S3(BackupDestination):
             id,
             self.runtime.strftime("%Y%m%d%H%M%S"),
             os.path.basename(filename))
-        logging.info("Uploading '%s' backup to S3 (%s)..." % (name, s3location))
+        logging.info("Uploading '%s' backup for '%s' to S3 (%s)..." % (name, self.id, s3location))
 
         uploadargs = ['aws', 's3', 'cp', '--only-show-errors', filename, s3location]
         uploadenv = os.environ.copy()

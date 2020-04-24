@@ -26,7 +26,7 @@ class GS(BackupDestination):
             id,
             self.runtime.strftime("%Y%m%d%H%M%S"),
             os.path.basename(filename))
-        logging.info("Uploading '%s' backup to GS (%s)..." % (name, gslocation))
+        logging.info("Uploading '%s' backup for '%s' to GS (%s)..." % (name, self.id, gslocation))
         uploadargs = ['gsutil', '-q', 'cp', filename, gslocation]
         uploadenv = os.environ.copy()
         uploadproc = subprocess.Popen(uploadargs, stderr=subprocess.PIPE, env=uploadenv)
