@@ -34,11 +34,11 @@ class GS(BackupDestination):
         exitcode = uploadproc.returncode
         errmsg = uploadproc.stderr.read()
         if exitcode != 0:
-            raise BackupException("Error while uploading: %s" % errmsg)
+            raise BackupException("Error while uploading (%s): %s" % (self.id, errmsg))
 
     def cleanup(self, id, name, stats):
         gslocation = "gs://%s/%s" % (self.bucket, id)
-        logging.info("Clearing down older '%s' backups from GS (%s)..." % (name, gslocation))
+        logging.info("Clearing down older '%s' backups for '%s' from GS (%s)..." % (name, self.id, gslocation))
 
         client = storage.Client.from_service_account_json(self.gcs_creds_path)
         bucket = client.get_bucket(self.bucket)

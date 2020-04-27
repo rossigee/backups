@@ -45,7 +45,7 @@ class Samba(BackupDestination):
             exitcode = uploadproc.wait()
             if exitcode != 0:
                 errmsg = "%s%s" % (uploadproc.stdout.read(), uploadproc.stderr.read())
-                raise BackupException("Error while uploading: %s" % errmsg)
+                raise BackupException("Error while uploading (%s): %s" % (self.id, errmsg))
         finally:
             os.unlink(credsfilename)
 

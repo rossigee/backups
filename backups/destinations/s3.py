@@ -47,7 +47,7 @@ class S3(BackupDestination):
         exitcode = uploadproc.returncode
         errmsg = uploadproc.stderr.read()
         if exitcode != 0:
-            raise BackupException("Error while uploading: %s" % errmsg)
+            raise BackupException("Error while uploading (%s): %s" % (self.id, errmsg))
 
     def _boto_kwargs(self):
         kwargs = dict()
@@ -58,7 +58,7 @@ class S3(BackupDestination):
 
     def cleanup(self, id, name, stats):
         s3location = "s3://%s/%s" % (self.bucket, id)
-        logging.info("Clearing down older '%s' backups from S3 (%s)..." % (name, s3location))
+        logging.info("Clearing down older '%s' backups for '%s' from S3 (%s)..." % (name, self.id, s3location))
 
         # Gather list of potentials first
         kwargs = self._boto_kwargs()
