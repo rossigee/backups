@@ -33,6 +33,7 @@ Currently implemented notifications are:
 * a Telegram notification
 * a simple flag file
 * a Prometheus push gateway
+* an Elasticsearch index
 
 Hopefully, it's fairly straightforward to extend or add to the above.
 
@@ -718,6 +719,32 @@ Parameters available in 'prometheus':
 | username | Push gateway auth username. |
 | password | Push gateway auth password. |
 
+Notification - Elasticsearch
+----------------------------
+
+You can specify a configuration to store backup statistics as an entry in an Elasticsearch index.
+
+```json
+{
+  "id": "logging",
+  "type": "elasticsearch",
+  "url": "https://logging-es-http.elasticsearch:9200",
+  "credentials": {
+    "username": "backups",
+    "password": "yourpasswordhere"
+  },
+  "indexpattern": "backups-%Y"
+}
+```
+
+Parameters available in 'elasticsearch':
+
+| Config key | Purpose |
+|------------|---------|
+| url | Elasticsearch URL, including authentication if required |
+| indexpattern | Pattern to use to determine the index to store the document to. |
+
+
 Complete Example
 ----------------
 
@@ -770,6 +797,8 @@ This simple example backs up some folders and a database, and deposits them to a
   "notifications": []
 }
 ```
+
+
 
 
 Credits

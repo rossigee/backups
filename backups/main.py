@@ -3,6 +3,7 @@
 import os
 import os.path
 import sys
+import datetime
 import time
 import argparse
 import getpass
@@ -30,6 +31,7 @@ default_modules = [
     'backups.notifications.flagfile',
     'backups.notifications.hipchat',
     'backups.notifications.discord',
+    'backups.notifications.elasticsearch',
     'backups.notifications.prometheus',
     'backups.notifications.matrix',
     'backups.notifications.slack',
@@ -60,6 +62,7 @@ class BackupRunInstance:
             try:
                 # Dump and compress
                 starttime = time.time()
+                self.stats.starttime = datetime.datetime.now()
                 dumpfiles = source.dump_and_compress(self.stats)
                 if not isinstance(dumpfiles, list):
                     dumpfiles = [dumpfiles, ]
@@ -74,11 +77,14 @@ class BackupRunInstance:
 
                 # Send each dump file to each listed destination
                 starttime = time.time()
+                self.stats.dumpedfiles = []
+                self.stats.retainedfiles = []
                 for dumpfile in dumpfiles:
                     for destination in self.destinations:
-                        destination.send(source.id, source.name, dumpfile)
-                        destination.cleanup(source.id, source.name, self.stats)
+                        self.stats.dumpedfiles += destination.send(source.id, source.name, dumpfile)
+                        self.stats.retainedfiles += destination.cleanup(source.id, source.name)
                 endtime = time.time()
+                self.stats.endtime = datetime.datetime.now()
                 self.stats.uploadtime = endtime - starttime
 
                 # Trigger success notifications as required

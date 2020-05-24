@@ -36,7 +36,9 @@ class GS(BackupDestination):
         if exitcode != 0:
             raise BackupException("Error while uploading (%s): %s" % (self.id, errmsg))
 
-    def cleanup(self, id, name, stats):
+        return gslocation
+
+    def cleanup(self, id, name):
         gslocation = "gs://%s/%s" % (self.bucket, id)
         logging.info("Clearing down older '%s' backups for '%s' from GS (%s)..." % (name, self.id, gslocation))
 
@@ -52,10 +54,13 @@ class GS(BackupDestination):
 
         # Loop and purge unretainable copies
         removable_names = []
+        retained_copies = []
         if self.retention_copies > 0:
             names = [name for d, name in candidates]
             if len(names) > self.retention_copies:
                 removable_names = names[0:(len(names) - self.retention_copies)]
+            else:
+                retained_copies = names[(len(names) - self.retention_copies):]
         if self.retention_days > 0:
             for d, name in candidates:
                 days = (datetime.datetime.now(tz.tzutc()) - d).days
@@ -65,5 +70,5 @@ class GS(BackupDestination):
             logging.info("Removing '%s'..." % name)
             bucket.get_key(name).delete()
 
-        # Return number of copies left
-        stats.retained_copies = len(candidates) - len(removable_names)
+        # Return list of retained copies
+        return retained_copies

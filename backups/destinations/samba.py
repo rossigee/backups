@@ -46,9 +46,11 @@ class Samba(BackupDestination):
             if exitcode != 0:
                 errmsg = "%s%s" % (uploadproc.stdout.read(), uploadproc.stderr.read())
                 raise BackupException("Error while uploading (%s): %s" % (self.id, errmsg))
+
+            return sambafile
         finally:
             os.unlink(credsfilename)
 
-    def cleanup(self, id, name, stats):
+    def cleanup(self, id, name):
         logging.warn("Retention control not implemented for Samba destinations yet (PRs welcome!)")
-        return
+        return []

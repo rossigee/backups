@@ -32,9 +32,8 @@ class Prometheus(BackupNotification):
         s.observe(stats.dumptime)
         s = Summary('backup_uploadtime', 'Time taken to upload backup in seconds', registry=registry)
         s.observe(stats.uploadtime)
-        if stats.retained_copies is not None:
-            g = Gauge('backup_retained_copies', 'Number of retained backups found on destination', registry=registry)
-            g.set(stats.retained_copies)
+        g = Gauge('backup_retained_copies', 'Number of retained backups found on destination', registry=registry)
+        g.set(len(stats.retained_copies))
         g = Gauge('backup_timestamp', 'Time backup completed as seconds-since-the-epoch', registry=registry)
         g.set_to_current_time()
 

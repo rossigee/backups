@@ -1,7 +1,16 @@
 class BackupRunStatistics:
     def __init__(self):
-        # Final size of dump file
+        # Start time for backup
+        self.starttime = None
+
+        # End time for backup
+        self.endtime = None
+
+        # Final combined size of dump files
         self.size = None
+
+        # List of filenames dumped
+        self.dumpedfiles = []
 
         # How long the dump (and encrypt) took in seconds
         self.dumptime = None
@@ -9,8 +18,8 @@ class BackupRunStatistics:
         # How long the upload to storage took in seconds
         self.uploadtime = None
 
-        # If known, how many retained backups for this job now (inc this one)
-        self.retained_copies = None
+        # The list of retained backups for this job (inc this one)
+        self.retained_copies = []
 
     def getSizeDescription(self):
         num = self.size

@@ -6,7 +6,12 @@ setup(name = 'backups',
     author = 'Ross Golder',
     author_email = 'ross@golder.org',
     url = 'https://github.com/rossigee/backups',
-    packages = ['backups', 'backups.sources', 'backups.destinations', 'backups.notifications'],
+    packages = [
+        'backups',
+        'backups.sources',
+        'backups.destinations',
+        'backups.notifications'
+    ],
     install_requires = [
         'requests',
         'python-dateutil'

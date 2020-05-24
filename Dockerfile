@@ -13,10 +13,12 @@ RUN apk add --no-cache \
 
 # Install main python packages required
 RUN pip3 install \
-    git+https://github.com/rossigee/backups@master \
     boto3 \
     awscli \
     adal \
     azure-mgmt-compute \
-    prometheus_client
+    prometheus_client \
+    elasticsearch==7.7.0
 
+COPY dist/backups-2.2.0.tar.gz /tmp
+RUN pip3 install /tmp/backups-2.2.0.tar.gz
