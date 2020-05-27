@@ -81,7 +81,7 @@ class BackupRunInstance:
                 self.stats.retainedfiles = []
                 for dumpfile in dumpfiles:
                     for destination in self.destinations:
-                        self.stats.dumpedfiles += destination.send(source.id, source.name, dumpfile)
+                        self.stats.dumpedfiles.append(destination.send(source.id, source.name, dumpfile))
                         self.stats.retainedfiles += destination.cleanup(source.id, source.name)
                 endtime = time.time()
                 self.stats.endtime = datetime.datetime.now()

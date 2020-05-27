@@ -36,7 +36,7 @@ class GS(BackupDestination):
         if exitcode != 0:
             raise BackupException("Error while uploading (%s): %s" % (self.id, errmsg))
 
-        return [gslocation, ]
+        return gslocation
 
     def cleanup(self, id, name):
         gslocation = "gs://%s/%s" % (self.bucket, id)

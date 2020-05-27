@@ -47,7 +47,7 @@ class Samba(BackupDestination):
                 errmsg = "%s%s" % (uploadproc.stdout.read(), uploadproc.stderr.read())
                 raise BackupException("Error while uploading (%s): %s" % (self.id, errmsg))
 
-            return [sambafile, ]
+            return sambafile
         finally:
             os.unlink(credsfilename)
 

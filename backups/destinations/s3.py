@@ -49,7 +49,7 @@ class S3(BackupDestination):
         if exitcode != 0:
             raise BackupException("Error while uploading (%s): %s" % (self.id, errmsg))
 
-        return [s3location, ]
+        return s3location
 
     def _boto_kwargs(self):
         kwargs = dict()
