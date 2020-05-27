@@ -21,4 +21,4 @@ RUN pip3 install \
     elasticsearch==7.7.0
 
 COPY dist/backups-2.3.1.tar.gz /tmp
-RUN pip3 install /tmp/backups-2.1.0.tar.gz
+RUN pip3 install /tmp/backups-2.3.1.tar.gz
