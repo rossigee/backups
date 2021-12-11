@@ -20,5 +20,7 @@ RUN pip3 install \
     prometheus_client \
     elasticsearch==7.7.0
 
-COPY dist/backups-2.3.1.tar.gz /tmp
-RUN pip3 install /tmp/backups-2.3.1.tar.gz
+COPY . /tmp/backups
+RUN cd /tmp/backups && \
+  python3 setup.py sdist && \
+  pip3 install dist/backups-2.3.1.tar.gz
