@@ -24,4 +24,4 @@ RUN pip3 install \
 COPY . /tmp/backups
 RUN cd /tmp/backups && \
   python3 setup.py sdist && \
-  pip3 install dist/backups-2.3.3.tar.gz
+  pip3 install dist/backups-2.3.4.tar.gz
