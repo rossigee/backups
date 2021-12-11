@@ -17,10 +17,11 @@ class Samba(BackupDestination):
         self.username = config['credentials']['username']
         self.password = config['credentials']['password']
         self.suffix = config['suffix']
+        self.tmpdir = "/var/tmp"
 
     def send(self, id, name, filename):
         credsfilename = '%s/%s.smbauth' % (self.tmpdir, self.id)
-        credsfile = open(credsfilename, 'wb')
+        credsfile = open(credsfilename, 'w')
         credsfile.write(
             "username = %s\n" \
             "password = %s\n" \
@@ -37,11 +38,11 @@ class Samba(BackupDestination):
                 datetime.datetime.now().strftime("%Y%m%d%H%M%S"),
                 self.suffix)
             basename = os.path.basename(filename)
-            sambaurl = "smb://%s/%s%s/%s" % (self.sambahost, self.sambashare, sambafile)
+            sambaurl = "smb://%s/%s/%s" % (self.sambahost, self.sambashare, sambafile)
             logging.info("Uploading '%s' backup for '%s' to Samba (%s)..." % (name, self.id, sambaurl))
             sharething = "//%s/%s" % (self.sambahost, self.sambashare)
             command = "put %s %s" % (filename, sambafile)
-            uploadargs = ['smbclient', '-A', self.authfile, sharething, '-c', command]
+            uploadargs = ['smbclient', '-A', credsfilename, sharething, '-c', command]
             uploadproc = subprocess.Popen(uploadargs, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             exitcode = uploadproc.wait()
             if exitcode != 0:
