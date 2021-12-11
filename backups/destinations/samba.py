@@ -28,7 +28,7 @@ class Samba(BackupDestination):
         )
         credsfile.flush()
         credsfile.close()
-        os.chmod(credsfilename, 0400)
+        os.chmod(credsfilename, 0o400)
 
         try:
             sambafile = "/%s-%s.%s" % (
