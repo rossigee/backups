@@ -8,6 +8,7 @@ RUN apk add --no-cache \
     openssh-client \
     mariadb-client \
     postgresql-client postgresql \
+    samba-client \
     gnupg \
     zip unzip
 
