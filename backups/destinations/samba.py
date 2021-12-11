@@ -16,8 +16,9 @@ class Samba(BackupDestination):
         self.workgroup = config['workgroup']
         self.username = config['credentials']['username']
         self.password = config['credentials']['password']
+        self.suffix = config['suffix']
 
-    def send(self, id, name, suffix, filename):
+    def send(self, id, name, filename):
         credsfilename = '%s/%s.smbauth' % (self.tmpdir, self.id)
         credsfile = open(credsfilename, 'wb')
         credsfile.write(
@@ -34,7 +35,7 @@ class Samba(BackupDestination):
             sambafile = "/%s-%s.%s" % (
                 id,
                 datetime.datetime.now().strftime("%Y%m%d%H%M%S"),
-                suffix)
+                self.suffix)
             basename = os.path.basename(filename)
             sambaurl = "smb://%s/%s%s/%s" % (self.sambahost, self.sambashare, sambafile)
             logging.info("Uploading '%s' backup for '%s' to Samba (%s)..." % (name, self.id, sambaurl))

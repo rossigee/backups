@@ -496,13 +496,14 @@ You can specify a Samba share to back up to.
 {
   "id": "bigshare",
   "type": "samba",
-  "hostname": "server1.local.lan",
+  "host": "server1.local.lan",
   "share": "TheShare",
   "workgroup": "WORKGROUP",
   "credentials": {
     "username": "backups",
     "password": "getyourown"
-  }
+  },
+  "suffix": "gpg"
 }
 ```
 
@@ -512,11 +513,12 @@ Parameters available in 'samba':
 
 | Config key | Purpose |
 |------------|---------|
-| hostname | Samba (DNS) hostname. |
+| host | Samba (DNS) hostname. |
 | share | Samba share to manage dump files on |
 | username | Samba username. |
 | password | Samba password. |
 | workgroup | Samba domain/workgroup. |
+| suffix | Suffix for created files. |
 
 
 Notification - Email
