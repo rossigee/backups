@@ -2,7 +2,10 @@ name: Create and publish a Docker image
 
 on:
   push:
-    branches: ['master']
+    branches:
+      - 'master'
+    tags:
+      - 'v*.*.*'
 
 env:
   IMAGE_NAME: rossigee/backups
