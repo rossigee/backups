@@ -12,8 +12,12 @@ class BackupSource:
         self.type = type
         self.suffix = suffix
         self.tmpdir = "/var/tmp"
+        self.recipients = []
+        self.passphrase = ""
         if 'name' in config:
             self.name = config['name']
+        if 'recipients' in config:
+            self.recipients = config['recipients']
         if 'passphrase' in config:
             self.passphrase = config['passphrase']
         if 'tmpdir' in config:
@@ -35,8 +39,11 @@ class BackupSource:
         for filename in filenames:
             if self.compress:
                 compressed_filename = backups.compress.compress(filename)
+            elif len(self.recipients) > 0:
+                compressed_filename = backups.encrypt.encrypt(filename, recipients=self.recipients)
+                os.unlink(filename)
             else:
-                compressed_filename = backups.encrypt.encrypt(filename, self.passphrase)
+                compressed_filename = backups.encrypt.encrypt(filename, passphrase=self.passphrase)
                 os.unlink(filename)
             compressed_files.append(compressed_filename)
         e_endtime = time.time()
