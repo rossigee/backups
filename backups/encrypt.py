@@ -12,7 +12,7 @@ def encrypt(filename, passphrase=None, recipients=None):
     encerrs = open(encerrsname, 'wb')
     encargs = ['gpg', '--batch', '--yes', '-q']
     if recipients is not None:
-        encargs += ['--trust-model', 'all', '--encrypt']
+        encargs += ['--trust-model', 'always', '--encrypt']
         for r in recipients:
             encargs += ['-r', r]
     elif passphrase is not None:
@@ -21,9 +21,8 @@ def encrypt(filename, passphrase=None, recipients=None):
         raise BackupException("Misconfigured encryption")
     encenv = os.environ.copy()
     encproc1 = subprocess.Popen(encargs, stdin=subprocess.PIPE, stdout=encfile, stderr=encerrs, env=encenv)
-    encproc1.communicate(passphrase.encode('utf8'))
-    #if encproc1.stdout:
-    #    encproc1.stdout.close()
+    if passphrase is not None:
+        encproc1.communicate(passphrase.encode('utf8'))
     encproc1.wait()
     encfile.close()
     encerrs.close()
