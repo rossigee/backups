@@ -4,18 +4,25 @@ import logging
 
 from backups.exceptions import BackupException
 
-def encrypt(filename, passphrase):
+def encrypt(filename, passphrase=None, recipients=None):
     logging.info("Encrypting '%s'..." % filename)
     encfilename = '%s.gpg' % filename
     encerrsname = '%s.err' % filename
     encfile = open(encfilename, 'wb')
     encerrs = open(encerrsname, 'wb')
-    encargs = ['gpg', '--batch', '--yes', '-q', '--passphrase-fd', '0', '-c', filename]
+    encargs = ['gpg', '--batch', '--yes', '-q']
+    if recipients is not None:
+        encargs += ['--trust-model', 'always', '--encrypt']
+        for r in recipients:
+            encargs += ['-r', r]
+    elif passphrase is not None:
+        encargs += ['--passphrase-fd', '0', '--symmetric', filename]
+    else:
+        raise BackupException("Misconfigured encryption")
     encenv = os.environ.copy()
     encproc1 = subprocess.Popen(encargs, stdin=subprocess.PIPE, stdout=encfile, stderr=encerrs, env=encenv)
-    encproc1.communicate(passphrase.encode('utf8'))
-    #if encproc1.stdout:
-    #    encproc1.stdout.close()
+    if passphrase is not None:
+        encproc1.communicate(passphrase.encode('utf8'))
     encproc1.wait()
     encfile.close()
     encerrs.close()

@@ -118,6 +118,15 @@ Parameters available in the root object:
 | notifications | A list of mechanisms by which to report success/failure. |
 
 
+Common Source parameters
+------------------------
+
+| Config key | Purpose |
+|------------|---------|
+| passphrase | A passphrase to encrypt the backup with (using GnuPG). |
+| recipients | (Optional) If recipients are provided, the encrypted backup is encrypted for the list of recipients specified. If recipients are not provided, the backup symetrically encrypted using the given passphrase |
+
+
 Source - Folder
 ---------------
 
@@ -155,7 +164,6 @@ Parameters available in 'folder':
 |------------|----------|
 | name |  Description of data being backed up (for reporting purposes). |
 | path | Name of file or folder to be backed up. |
-| passphrase | A passphrase to encrypt the backup with (using GnuPG). |
 | excludes | One or more files/paths to be excluded from the backup. |
 
 
