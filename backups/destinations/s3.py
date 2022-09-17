@@ -1,6 +1,7 @@
 import os, os.path
 import subprocess
 import logging
+import datetime
 
 import boto3
 
@@ -83,7 +84,8 @@ class S3(BackupDestination):
             retained_copies = names[(len(names) - self.retention_copies):]
         if self.retention_days > 0:
             for d, name in candidates:
-                days = (d - timedate.timedate.now()).days
+                #days = (d - datetime.datetime.utcnow()).days
+                days = d.now().day - datetime.datetime.now().day
                 if days > self.retention_days:
                     removable_names.append(name)
         for name in removable_names:
