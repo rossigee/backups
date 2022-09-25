@@ -16,9 +16,10 @@ def encrypt(filename, passphrase=None, recipients=None):
         for r in recipients:
             encargs += ['-r', r]
     elif passphrase is not None:
-        encargs += ['--passphrase-fd', '0', '--symmetric', filename]
+        encargs += ['--passphrase-fd', '0', '--symmetric']
     else:
         raise BackupException("Misconfigured encryption")
+    encargs += [filename]
     encenv = os.environ.copy()
     encproc1 = subprocess.Popen(encargs, stdin=subprocess.PIPE, stdout=encfile, stderr=encerrs, env=encenv)
     if passphrase is not None:
