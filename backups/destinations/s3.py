@@ -85,7 +85,7 @@ class S3(BackupDestination):
             retained_copies = names[(len(names) - self.retention_copies):]
         if self.retention_days > 0:
             for d, name in candidates:
-                days = (datetime.datetime.utcnow() - d).days
+                days = (datetime.datetime.utcnow() - d.replace(tzinfo=None)).days
                 if days > self.retention_days:
                     removable_names.append(name)
         for name in removable_names:
