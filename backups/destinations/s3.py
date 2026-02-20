@@ -73,6 +73,7 @@ class S3(BackupDestination):
         for obj in bucket.objects.filter(Prefix="%s/" % id):
             candidates.append([obj.last_modified, obj.key])
         candidates.sort()
+        logging.info("Found '%d' candidates to clear down for '%s' from S3 (%s)..." % (len(candidates), self.id, s3location))
 
         # Loop and purge unretainable copies
         removable_names = []
@@ -84,8 +85,7 @@ class S3(BackupDestination):
             retained_copies = names[(len(names) - self.retention_copies):]
         if self.retention_days > 0:
             for d, name in candidates:
-                #days = (d - datetime.datetime.utcnow()).days
-                days = d.now().day - datetime.datetime.now().day
+                days = (datetime.datetime.utcnow() - d).days
                 if days > self.retention_days:
                     removable_names.append(name)
         for name in removable_names:
