@@ -29,7 +29,6 @@ default_modules = [
     'backups.destinations.s3',
     'backups.destinations.samba',
     'backups.notifications.flagfile',
-    'backups.notifications.hipchat',
     'backups.notifications.discord',
     'backups.notifications.elasticsearch',
     'backups.notifications.prometheus',
