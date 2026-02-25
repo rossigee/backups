@@ -14,15 +14,22 @@ Currently implemented sources are:
 * folders via SSH (using tar)
 * MySQL databases (using mysqldump)
 * MySQL databases via SSH (using mysqldump)
-* RDS database snapshots (using mysqldump)
 * PostgreSQL databases (using pg_dump)
+* RDS MySQL database snapshots (using mysqldump)
+* RDS PostgreSQL database snapshots (using pg_dump)
 * Azure Managed Disks
+* LVM snapshots over SSH
 
 Currently implemented destinations are:
 
 * an S3 bucket (uses aws-cli)
 * a GS bucket (uses gsutil)
-* a Samba share (uses pysmbc)
+* a Samba share (uses smbclient)
+* a local filesystem path
+* a Backblaze B2 bucket (uses b2sdk)
+* a Minio/S3-compatible bucket (uses minio SDK; works with DigitalOcean Spaces etc.)
+* a Dropbox folder (uses dropbox SDK)
+* a Google Drive folder (uses google-api-python-client with service account)
 
 Currently implemented notifications are:
 
@@ -57,7 +64,7 @@ For security purposes, the script is designed to run as a non-privileged user. B
 Installation
 ------------
 
-1. Install me. Unpack me, run 'python setup.py' as root.
+1. Install me. Unpack me, run `pip install .` as root (or in a virtualenv).
 
 1. Create a configuration file listing the folders/databases you want to back up, an encryption passphrase, and one or more places you want the encrypted dump file uploaded to, and details of any notification methods you wish to use. See docs further down for examples. You can install the dependencies now, or you can wait until you get errors later :)
 
@@ -255,65 +262,92 @@ Parameters available in 'pgsql':
 | dbpass | Password to connect to PostgreSQL with. |
 
 
-Source - RDS Database Snapshots
------------------------
+Source - RDS MySQL Database Snapshots
+-------------------------------------
 
-You can specify one or more Amazon RDS databases to be backed up, where they have automated rolling backups enabled. Currently, this only supports MySQL-based RDS instances.
+You can specify one or more Amazon RDS MySQL instances to be backed up using automated snapshots. The most recent automatic snapshot is restored to a temporary RDS instance, `mysqldump` is run against it, then the temporary instance is deleted. This avoids any load on the live database.
 
-The last automatic snapshot of the given database will be identified using the AWS credentials provided. That will then be restored to a temporary instance, in a security group that allows access to the agent machine. The agent machine (running this script), will then 'mysqldump' the data to a '.sql.gz' file, and destroy the temporary instance. This avoids the need to run any backup queries that would adversely affect the performance of the live database.
-
-WARNING: This can take a very long time in many cases.
+WARNING: This can take a very long time.
 
 ```json
 {
   "id": "livecompanydb",
   "name": "Live Company Data",
-  "type": "pgsql",
-  "dbhost": "localhost",
+  "type": "rds",
+  "instancename": "livedb1",
+  "region": "eu-west-1",
+  "security_group": "sg-xxxxxxxx",
+  "instance_class": "db.t3.small",
   "dbname": "livecompany",
   "dbuser": "backups",
   "dbpass": "zzzuserwithreadonlyperms",
-  "instancename": "livedb1",
-  "region": "eu-west-1",
-  "security_group": "livedbbackup",
-  "instance_class": "db.m1.small",
   "passphrase": "64b0c7405f2d8051e2b9f02aa4898acc"
 }
 ```
 
-This module uses the 'boto' package, and expects auth credentials to be provided in the '~/.boto' file. This needs to be configured:
+AWS credentials are taken from the environment or `~/.aws/credentials`. You can also supply them directly in the config:
 
+```json
+{
+  "credentials": {
+    "aws_access_key_id": "YOURACCESSKEY",
+    "aws_secret_access_key": "YOURSECRETKEY"
+  }
+}
 ```
-# cat >/home/backups/.boto <<EOF
-[Credentials]
-aws_access_key_id = YOURACCESSKEY
-aws_secret_access_key = YOURSECRETKEY
-EOF
-# chown backups /home/backups/.boto
-# chmod 400 /home/backups/.boto
-```
 
-By default, the '--events' flag is passed to mysqldump. This may break older versions of mysqldump (prior to version 5.1, IIRC), so you can disable this flag with the 'noevents' parameter.
-
-The 'security_group' must allow access from the host running mysqldump.
+The `security_group` must allow inbound access from the host running this script.
 
 Parameters available in 'rds':
 
 | Config key | Purpose |
 |------------|---------|
 | name | Description of data being backed up (for reporting purposes). |
-| dbhost | Name of the mySQL host to connect to. |
-| dbname | Name of the mySQL database to back up. |
-| dbuser | Username to connect to mySQL as. |
-| dbpass | Password to connect to mySQL with. |
-| defaults | The location of an 'mysqlclient' credentials file to use instead of creating a temporary one with using above 'db*' variables. |
-| noevents | Don't pass the '--events' flag to 'mysqldump'. |
-| aws_access_key_id | AWS access key |
-| aws_secret_access_key | AWS secret access key |
-| instancename | RDS instance name to clone backup of. |
-| region | AWS hosting region of RDS database. |
-| security_group | VPC security group for replica to provide access to. |
-| instance_class | RDS instance class to create replica as (defaults to 'db.m1.small'). |
+| instancename | RDS instance identifier to restore a snapshot of. |
+| region | AWS region of the RDS instance. |
+| security_group | VPC security group ID to assign to the temporary instance. |
+| instance_class | RDS instance class for the temporary instance (default: `db.t3.small`). |
+| dbname | MySQL database name to dump. |
+| dbuser | MySQL username. |
+| dbpass | MySQL password. |
+| noevents | Don't pass the `--events` flag to `mysqldump`. |
+| credentials | Object with `aws_access_key_id` and `aws_secret_access_key` (optional). |
+
+
+Source - RDS PostgreSQL Database Snapshots
+------------------------------------------
+
+Identical workflow to the RDS MySQL source above, but uses `pg_dump` instead of `mysqldump`. Use `type: rds-pgsql`.
+
+```json
+{
+  "id": "livecompanydb",
+  "name": "Live Company Data",
+  "type": "rds-pgsql",
+  "instancename": "livedb1",
+  "region": "eu-west-1",
+  "security_group": "sg-xxxxxxxx",
+  "instance_class": "db.t3.small",
+  "dbname": "livecompany",
+  "dbuser": "backups",
+  "dbpass": "zzzuserwithreadonlyperms",
+  "passphrase": "64b0c7405f2d8051e2b9f02aa4898acc"
+}
+```
+
+Parameters available in 'rds-pgsql':
+
+| Config key | Purpose |
+|------------|---------|
+| name | Description of data being backed up (for reporting purposes). |
+| instancename | RDS instance identifier to restore a snapshot of. |
+| region | AWS region of the RDS instance. |
+| security_group | VPC security group ID to assign to the temporary instance. |
+| instance_class | RDS instance class for the temporary instance (default: `db.t3.small`). |
+| dbname | PostgreSQL database name to dump. |
+| dbuser | PostgreSQL username. |
+| dbpass | PostgreSQL password. |
+| credentials | Object with `aws_access_key_id` and `aws_secret_access_key` (optional). |
 
 
 Source - Volume snapshots
@@ -527,6 +561,154 @@ Parameters available in 'samba':
 | password | Samba password. |
 | workgroup | Samba domain/workgroup. |
 | suffix | Suffix for created files. |
+
+
+Destination - Local Filesystem
+------------------------------
+
+You can specify a local filesystem path to copy backups to. This is useful for writing to a mounted NFS share, USB drive, or any other locally accessible storage.
+
+```json
+{
+  "id": "local-backup",
+  "type": "local",
+  "path": "/mnt/backup-drive",
+  "retention_copies": 7
+}
+```
+
+Parameters available in 'local':
+
+| Config key | Purpose |
+|------------|---------|
+| path | Local filesystem path to copy backups to. |
+| retention_copies | How many timestamped backup directories to keep. |
+| retention_days | How many days of backups to keep. |
+
+
+Destination - Backblaze B2
+--------------------------
+
+You can specify a Backblaze B2 bucket to back up to using the native B2 SDK.
+
+```json
+{
+  "id": "b2-backup",
+  "type": "b2",
+  "bucket": "my-backup-bucket",
+  "credentials": {
+    "application_key_id": "your-application-key-id",
+    "application_key": "your-application-key"
+  },
+  "retention_copies": 5,
+  "retention_days": 30
+}
+```
+
+Create an application key at https://secure.backblaze.com/app_keys.htm with read/write access to the target bucket.
+
+Parameters available in 'b2':
+
+| Config key | Purpose |
+|------------|---------|
+| bucket | B2 bucket name. |
+| credentials.application_key_id | B2 application key ID. |
+| credentials.application_key | B2 application key. |
+| retention_copies | How many copies of older backups to keep. |
+| retention_days | How many days of backups to keep. |
+
+
+Destination - Minio / S3-Compatible
+-------------------------------------
+
+You can specify a Minio bucket (or any S3-compatible service such as DigitalOcean Spaces) to back up to using the native Minio SDK.
+
+```json
+{
+  "id": "minio-backup",
+  "type": "minio",
+  "endpoint": "nyc3.digitaloceanspaces.com",
+  "bucket": "my-backup-bucket",
+  "secure": true,
+  "credentials": {
+    "access_key": "your-access-key",
+    "secret_key": "your-secret-key"
+  },
+  "retention_copies": 5
+}
+```
+
+For a local Minio instance, set `"secure": false` and use the host:port as the endpoint (e.g. `"localhost:9000"`).
+
+Parameters available in 'minio':
+
+| Config key | Purpose |
+|------------|---------|
+| endpoint | Minio/S3-compatible endpoint (host or host:port, no scheme). |
+| bucket | Bucket name. |
+| secure | Whether to use TLS (default: `true`). |
+| credentials.access_key | Access key. |
+| credentials.secret_key | Secret key. |
+| retention_copies | How many copies of older backups to keep. |
+| retention_days | How many days of backups to keep. |
+
+
+Destination - Dropbox
+---------------------
+
+You can specify a Dropbox folder to back up to using the official Dropbox SDK.
+
+```json
+{
+  "id": "dropbox-backup",
+  "type": "dropbox",
+  "access_token": "your-long-lived-access-token",
+  "folder": "/backups",
+  "retention_copies": 7
+}
+```
+
+Generate a long-lived access token from https://www.dropbox.com/developers/apps.
+
+Parameters available in 'dropbox':
+
+| Config key | Purpose |
+|------------|---------|
+| access_token | Dropbox long-lived access token. |
+| folder | Root folder path within Dropbox (default: `/backups`). |
+| retention_copies | How many timestamped backup directories to keep. |
+
+
+Destination - Google Drive
+--------------------------
+
+You can specify a Google Drive folder to back up to using a service account and `google-api-python-client`.
+
+```json
+{
+  "id": "gdrive-backup",
+  "type": "gdrive",
+  "creds_file": "/etc/backups/gdrive-service-account.json",
+  "folder_id": "your-google-drive-folder-id",
+  "retention_copies": 10
+}
+```
+
+To set up:
+1. Create a service account at https://console.cloud.google.com
+2. Enable the Google Drive API for the project
+3. Download the JSON key file and place it on the backup host
+4. Share the target Drive folder with the service account email address (with Editor permission)
+5. Use the folder ID from the Drive URL as `folder_id`
+
+Parameters available in 'gdrive':
+
+| Config key | Purpose |
+|------------|---------|
+| creds_file | Path to the service account JSON key file. |
+| folder_id | Google Drive folder ID to store backups in. |
+| retention_copies | How many timestamped backup directories to keep. |
+| retention_days | How many days of backups to keep. |
 
 
 Notification - Email
