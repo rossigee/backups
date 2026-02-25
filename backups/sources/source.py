@@ -14,8 +14,7 @@ class BackupSource:
         self.tmpdir = "/var/tmp"
         self.recipients = []
         self.passphrase = ""
-        if 'name' in config:
-            self.name = config['name']
+        self.name = config.get('name', self.id)
         if 'recipients' in config:
             self.recipients = config['recipients']
         if 'passphrase' in config:

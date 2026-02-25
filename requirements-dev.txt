@@ -1,0 +1,8 @@
+# Test dependencies
+pytest
+pytest-cov
+moto[s3]
+boto3
+requests
+python-dateutil
+prometheus_client

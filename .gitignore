@@ -1,6 +1,9 @@
 *~
 *.bak
 *.pyc
+__pycache__/
+.coverage
+.pytest_cache/
 backups.egg-info
 MANIFEST
 build

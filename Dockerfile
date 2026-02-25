@@ -13,15 +13,16 @@ RUN apk add --no-cache \
     zip unzip
 
 # Install main python packages required
-RUN pip3 install \
+RUN pip3 install --break-system-packages \
     boto3 \
     awscli \
-    adal \
+    azure-identity \
     azure-mgmt-compute \
     prometheus_client \
-    elasticsearch==7.7.0
+    elasticsearch
 
 COPY . /tmp/backups
-RUN cd /tmp/backups && \
-  python3 setup.py sdist && \
-  pip3 install dist/backups-2.4.1.tar.gz
+RUN pip3 install --break-system-packages build && \
+  cd /tmp/backups && \
+  python3 -m build && \
+  pip3 install --break-system-packages dist/backups-*.tar.gz
