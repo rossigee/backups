@@ -19,7 +19,12 @@ RUN pip3 install --break-system-packages \
     azure-identity \
     azure-mgmt-compute \
     prometheus_client \
-    elasticsearch
+    elasticsearch \
+    b2sdk \
+    minio \
+    dropbox \
+    google-api-python-client \
+    google-auth
 
 COPY . /tmp/backups
 RUN pip3 install --break-system-packages build && \

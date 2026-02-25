@@ -1,4 +1,3 @@
-import os, os.path
 import logging
 import random
 import time
@@ -8,16 +7,17 @@ import boto3
 from backups.sources import backupsource
 from backups.exceptions import BackupException
 from backups.sources.source import BackupSource
-from backups.sources.mysql import MySQL
+from backups.sources.postgresql import PostgreSQL
+from backups.sources.rds import RDS
 
-@backupsource('rds')
-class RDS(MySQL):
-    def __init__(self, config, type="RDS"):
+@backupsource('rds-pgsql')
+class RDSPostgreSQL(PostgreSQL):
+    def __init__(self, config, type="RDS-PostgreSQL"):
         BackupSource.__init__(self, config, type, "sql.gpg")
         self.__common_init__(config)
 
     def __common_init__(self, config):
-        MySQL.__common_init__(self, config)
+        PostgreSQL.__common_init__(self, config)
         self.instancename = config['instancename']
         self.rds_region = config['region']
         self.security_group = config['security_group']
@@ -27,26 +27,9 @@ class RDS(MySQL):
             self.aws_access_key = config['credentials']['aws_access_key_id']
             self.aws_secret_key = config['credentials']['aws_secret_access_key']
 
-    def _get_client(self):
-        kwargs = {'region_name': self.rds_region}
-        if self.credentials:
-            kwargs['aws_access_key_id'] = self.aws_access_key
-            kwargs['aws_secret_access_key'] = self.aws_secret_key
-        return boto3.client('rds', **kwargs)
-
-    def _wait_for_status(self, client, instance_id, target_status, timeout=600):
-        elapsed = 0
-        while elapsed < timeout:
-            response = client.describe_db_instances(DBInstanceIdentifier=instance_id)
-            status = response['DBInstances'][0]['DBInstanceStatus']
-            logging.debug("RDS instance '%s' status: %s" % (instance_id, status))
-            if status == target_status:
-                return response['DBInstances'][0]
-            if status in ('failed', 'incompatible-restore', 'incompatible-parameters'):
-                raise BackupException("RDS instance '%s' entered unexpected status: %s" % (instance_id, status))
-            time.sleep(20)
-            elapsed += 20
-        raise BackupException("Timed out waiting for RDS instance '%s' to reach '%s'" % (instance_id, target_status))
+    # Reuse RDS boto3 helpers
+    _get_client = RDS._get_client
+    _wait_for_status = RDS._wait_for_status
 
     def dump(self):
         client = self._get_client()
@@ -88,11 +71,10 @@ class RDS(MySQL):
             )
             self._wait_for_status(client, instance_id, 'available')
 
-            # Allow security group change to propagate
             logging.debug("Waiting for security group change to take effect...")
             time.sleep(30)
 
-            dumpfilename = MySQL.dump(self)[0]
+            dumpfilename = PostgreSQL.dump(self)[0]
         finally:
             logging.info("Deleting temporary RDS instance '%s'..." % instance_id)
             try:
