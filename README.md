@@ -362,8 +362,8 @@ This method allows us to specify a set of RDS/EC2 volumes. When sourced, this wi
   "type": "snapshot",
   "instancename": "maindb1",
   "credentials": {
-    "aws_access_key_id": "AKIAJPG7RJVVKWT3UX3A",
-    "aws_secret_access_key": "Owfs3nErv1yQl5cyYfSYeCmfgBWLle9H+oE86KZi"
+    "aws_access_key_id": "YOUR_ACCESS_KEY_ID",
+    "aws_secret_access_key": "YOUR_SECRET_ACCESS_KEY"
   }
 }
 ```
@@ -465,68 +465,68 @@ You can specify an S3 bucket to back up to.
 
 ```json
 {
-  "bucket": "backups-123456789",
+  "id": "s3-backup",
+  "type": "s3",
+  "bucket": "my-backup-bucket",
+  "region": "eu-west-1",
+  "credentials": {
+    "aws_access_key_id": "YOUR_ACCESS_KEY_ID",
+    "aws_secret_access_key": "YOUR_SECRET_ACCESS_KEY"
+  },
+  "retention_copies": 7,
+  "retention_days": 30
 }
 ```
 
-The 'aws' CLI client gets it's authentication credentials and other configuration from the 'backups' user's '~/.aws/config' file. This needs to be configured as per instructions in the AWS CLI documentation.
+If `credentials` are omitted, the AWS CLI will fall back to the standard credential chain (`~/.aws/credentials`, IAM instance role, environment variables, etc.).
 
-Additionally, the S3 destination provides some simple backup rotation options. After a successful backup, the backup files are listed and the 'retention_copies' and 'retention_days' options, if present, are applied to identify and remove any backups that are no longer required.
+For S3-compatible services (e.g. MinIO, Wasabi), supply `endpoint_url`:
+
+```json
+{
+  "endpoint_url": "https://s3.wasabisys.com"
+}
+```
 
 Parameters available in 's3':
 
 | Config key | Purpose |
 |------------|---------|
-| bucket | S3 bucket to dump files to. |
-| region | AWS availability zone. |
-| aws_access_key_id | AWS access key. |
-| aws_secret_access_key | AWS secret access key. |
+| bucket | S3 bucket name. |
+| region | AWS region. |
+| credentials.aws_access_key_id | AWS access key ID (optional). |
+| credentials.aws_secret_access_key | AWS secret access key (optional). |
 | retention_copies | How many copies of older backups to keep. |
-| retention_days |  How many days of backups to keep. |
-| endpoint_url | (optional) Endpoint URL for S3 service |
+| retention_days | How many days of backups to keep. |
+| endpoint_url | S3-compatible endpoint URL (optional). |
 
 
 Destination - GS
 ----------------
 
-You can specify a GS bucket to back up to.
+You can specify a Google Cloud Storage bucket to back up to. Uploads use `gsutil` and retention management uses the `google-cloud-storage` Python SDK.
 
 ```json
 {
-  "bucket": "backups-123456789",
+  "id": "gcs-backup",
+  "type": "gs",
+  "bucket": "my-backup-bucket",
+  "gcs_creds_path": "/etc/backups/gcs-service-account.json",
+  "retention_copies": 7,
+  "retention_days": 30
 }
 ```
 
-The 'gs' destination module uses the boto library in conjunction with 'gsutil.' The 'gsutil' CLI client gets it's authentication credentials and other configuration from the 'backups' user's '~/.boto' file.
-
-The GS module requires a GCP service account to be created with appropriate permissions to write and delete from GS buckets. The key file needs to be in P12 format. IMPORTANT: Properly secure this file and related information.
-
-More information on configuring gsutil and boto as well as preparing a service account can be found at https://cloud.google.com/storage/docs/boto-plugin.
-
-The boto file should contain entries similar to:
-```
-[Credentials]
-gs_service_client_id = some-service-account@your-project.iam.gserviceaccount.com
-gs_service_key_file = /some/path/to/your/service-account-credential-file.p12
-gs_service_key_file_password = asecretpassword
-
-[GSUtil]
-default_api_version = 2
-```
-AWS and GCP credential data can happily share the same section.
-
-Additionally, the GS destination provides some simple backup rotation options. After a successful backup, the backup files are listed and the 'retention_copies' and 'retention_days' options, if present, are applied to identify and remove any backups that are no longer required.
+Create a GCP service account with Storage Object Admin on the target bucket, download the JSON key file, and place it on the backup host. Ensure `gsutil` is authenticated with the same service account (e.g. via `GOOGLE_APPLICATION_CREDENTIALS` or `gcloud auth activate-service-account`).
 
 Parameters available in 'gs':
 
 | Config key | Purpose |
 |------------|---------|
-| bucket | GS bucket to dump files to. |
-| gs_service_client_id | GCP service account. |
-| gs_service_key_file | Location of service account file (in P12 format). |
-| gs_service_key_file_password | Password for service account file. |
+| bucket | GCS bucket name. |
+| gcs_creds_path | Path to the GCP service account JSON key file. |
 | retention_copies | How many copies of older backups to keep. |
-| retention_days |  How many days of backups to keep. |
+| retention_days | How many days of backups to keep. |
 
 
 Destination - Samba
@@ -981,8 +981,8 @@ This simple example backs up some folders and a database, and deposits them to a
       "bucket": "mybucketnamehere",
       "region": "eu-west-1",
       "credentials": {
-        "aws_access_key_id": "AKIAJPG7RJVVKWT3UX3A",
-        "aws_secret_access_key": "Owfs3nErv1yQl5cyYfSYeCmfgBWLle9H+oE86KZi"
+        "aws_access_key_id": "YOUR_ACCESS_KEY_ID",
+        "aws_secret_access_key": "YOUR_SECRET_ACCESS_KEY"
       }
     }
   ],
