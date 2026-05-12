@@ -7,6 +7,7 @@ from backups.notifications.notification import BackupNotification
 @backupnotification('flagfile')
 class Flagfile(BackupNotification):
     def __init__(self, config):
+        BackupNotification.__init__(self, config, 'flagfile')
         self.filename = config['flagfile']
         self.notify_on_success = True
         self.notify_on_failure = False
