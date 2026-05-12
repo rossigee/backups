@@ -1,15 +1,15 @@
-# Notification: Golder
+# Notification: Cloudflare Backup Registry
 
-Posts backup run reports to the Golder backup registry API.
+Posts backup run reports to the Cloudflare Backup Registry API.
 
-**Module**: `backups.notifications.golder`
+**Module**: `backups.notifications.cloudflare_backup_registry`
 
 ## Example
 
 ```json
 {
-  "id": "golder-notify",
-  "type": "golder",
+  "id": "cloudflare-backup-registry-notify",
+  "type": "cloudflare-backup-registry",
   "url": "https://backups.golder.tech/v1/backup-runs",
   "token": "your_api_token",
   "metadata": {"environment": "production"}

@@ -8,10 +8,10 @@ from backups.notifications.notification import BackupNotification
 from backups.notifications import backupnotification
 
 
-@backupnotification('golder')
-class Golder(BackupNotification):
+@backupnotification('cloudflare-backup-registry')
+class CloudflareBackupRegistry(BackupNotification):
     def __init__(self, config):
-        BackupNotification.__init__(self, config, 'golder')
+        BackupNotification.__init__(self, config, 'cloudflare-backup-registry')
         self.url = config['url']
         self.token = config.get('token')
         self.metadata = config.get('metadata', {})
@@ -23,9 +23,9 @@ class Golder(BackupNotification):
         try:
             r = requests.post(self.url, json=payload, headers=headers)
             r.raise_for_status()
-            logging.info("Sent backup run notification to Golder.")
+            logging.info("Sent backup run notification to Cloudflare Backup Registry.")
         except requests.exceptions.HTTPError as err:
-            logging.error(f"Unable to send notification to Golder: {err}")
+            logging.error(f"Unable to send notification to Cloudflare Backup Registry: {err}")
 
     def notify_success(self, source, hostname, filename, stats):
         payload = {

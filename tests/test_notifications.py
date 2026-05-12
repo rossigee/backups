@@ -1,7 +1,7 @@
 import pytest
 from unittest.mock import Mock, patch
 from backups.notifications.prometheus import Prometheus
-from backups.notifications.golder import Golder
+from backups.notifications.cloudflare_backup_registry import CloudflareBackupRegistry
 
 class TestPrometheus:
     def test_init(self):
@@ -68,30 +68,30 @@ class TestPrometheus:
         prom.notify_success(mock_source, hostname, filename, mock_stats)
 
 
-class TestGolder:
+class TestCloudflareBackupRegistry:
     def test_init(self):
         config = {
             'url': 'https://backups.golder.tech/v1/backup-runs',
             'token': 'test_token',
             'metadata': {'env': 'test'}
         }
-        golder = Golder(config)
-        assert golder.url == 'https://backups.golder.tech/v1/backup-runs'
-        assert golder.token == 'test_token'
-        assert golder.metadata == {'env': 'test'}
-        assert golder.notify_on_success == True
-        assert golder.notify_on_failure == False
+        registry = CloudflareBackupRegistry(config)
+        assert registry.url == 'https://backups.golder.tech/v1/backup-runs'
+        assert registry.token == 'test_token'
+        assert registry.metadata == {'env': 'test'}
+        assert registry.notify_on_success == True
+        assert registry.notify_on_failure == False
 
     def test_init_no_token(self):
         config = {'url': 'https://backups.golder.tech/v1/backup-runs'}
-        golder = Golder(config)
-        assert golder.token is None
-        assert golder.metadata == {}
+        registry = CloudflareBackupRegistry(config)
+        assert registry.token is None
+        assert registry.metadata == {}
 
-    @patch('backups.notifications.golder.requests.post')
+    @patch('backups.notifications.cloudflare_backup_registry.requests.post')
     def test_notify_success(self, mock_post):
         config = {'url': 'https://backups.golder.tech/v1/backup-runs', 'token': 'test_token'}
-        golder = Golder(config)
+        registry = CloudflareBackupRegistry(config)
 
         mock_source = Mock()
         mock_source.name = 'test_job'
@@ -105,7 +105,7 @@ class TestGolder:
         mock_stats.end_time.isoformat.return_value = '2023-01-01T00:10:00'
         mock_stats.size = 1000
 
-        golder.notify_success(mock_source, hostname, filename, mock_stats)
+        registry.notify_success(mock_source, hostname, filename, mock_stats)
 
         mock_post.assert_called_once()
         args, kwargs = mock_post.call_args
@@ -120,17 +120,17 @@ class TestGolder:
         assert 'run_id' in payload
         assert payload['metadata'] == {}
 
-    @patch('backups.notifications.golder.requests.post')
+    @patch('backups.notifications.cloudflare_backup_registry.requests.post')
     def test_notify_failure(self, mock_post):
         config = {'url': 'https://backups.golder.tech/v1/backup-runs', 'token': 'test_token'}
-        golder = Golder(config)
+        registry = CloudflareBackupRegistry(config)
 
         mock_source = Mock()
         mock_source.name = 'test_job'
         hostname = 'testhost'
         error = Exception('Backup failed')
 
-        golder.notify_failure(mock_source, hostname, error)
+        registry.notify_failure(mock_source, hostname, error)
 
         mock_post.assert_called_once()
         args, kwargs = mock_post.call_args
