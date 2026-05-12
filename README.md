@@ -89,6 +89,7 @@ All destinations support `retention_copies` and/or `retention_days` to automatic
 | `flagfile` | Write a flag file for monitoring | [docs/notifications/flagfile.md](docs/notifications/flagfile.md) |
 | `prometheus` | Push metrics to Prometheus Pushgateway | [docs/notifications/prometheus.md](docs/notifications/prometheus.md) |
 | `elasticsearch` | Write stats documents to Elasticsearch | [docs/notifications/elasticsearch.md](docs/notifications/elasticsearch.md) |
+| `golder` | Backup run reports to Golder registry | [docs/notifications/golder.md](docs/notifications/golder.md) |
 
 ## Scheduling
 
