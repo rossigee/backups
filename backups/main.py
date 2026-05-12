@@ -91,7 +91,7 @@ class BackupRunInstance:
                     try:
                         notification._notify_success(source, self.hostname, dumpfile, self.stats)
                     except Exception as e:
-                        logging.error("Error sending success notification (%s): %s" % (typeof(notification), e.__str__()))
+                        logging.error("Error sending success notification (%s): %s" % (type(notification), e.__str__()))
 
             except Exception as e:
                 import traceback
@@ -101,7 +101,7 @@ class BackupRunInstance:
                     try:
                         notification._notify_failure(source, self.hostname, e)
                     except Exception as e2:
-                        logging.error("Error sending failure notification (%s): %s" % (typeof(notification), e2.__str__()))
+                        logging.error("Error sending failure notification (%s): %s" % (type(notification), e2.__str__()))
                         logging.error("Original error was: %s" % e.__str__())
 
             finally:
