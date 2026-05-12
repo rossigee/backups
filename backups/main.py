@@ -88,14 +88,21 @@ class BackupRunInstance:
 
                 # Trigger success notifications as required
                 for notification in self.notifications:
-                    notification._notify_success(source, self.hostname, dumpfile, self.stats)
+                    try:
+                        notification._notify_success(source, self.hostname, dumpfile, self.stats)
+                    except Exception as e:
+                        logging.error("Error sending success notification (%s): %s" % (typeof(notification), e.__str__()))
 
             except Exception as e:
                 import traceback
                 traceback.print_exc()
                 # Trigger notifications as required
                 for notification in self.notifications:
-                    notification._notify_failure(source, self.hostname, e)
+                    try:
+                        notification._notify_failure(source, self.hostname, e)
+                    except Exception as e2:
+                        logging.error("Error sending failure notification (%s): %s" % (typeof(notification), e2.__str__()))
+                        logging.error("Original error was: %s" % e.__str__())
 
             finally:
                 # Done with the dump file now
