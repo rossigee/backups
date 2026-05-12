@@ -14,7 +14,10 @@ setup(name = 'backups',
     ],
     install_requires = [
         'requests',
-        'python-dateutil'
+        'python-dateutil',
+        'opentelemetry-api',
+        'opentelemetry-sdk',
+        'opentelemetry-exporter-otlp-proto-grpc'
     ],
     entry_points = {
         'console_scripts': [

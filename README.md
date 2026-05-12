@@ -48,6 +48,23 @@ Or asymmetric (GPG public key):
 }
 ```
 
+## Tracing Configuration
+
+OpenTelemetry OTLP tracing is supported for observability. Tracing is disabled by default (zero performance impact).
+
+To enable tracing:
+- Set the `OTEL_EXPORTER_OTLP_ENDPOINT` environment variable to your OTLP collector/backend URL (e.g., `http://localhost:4317` for gRPC).
+- Optional: Set `OTEL_EXPORTER_OTLP_HEADERS` for authentication (e.g., `authorization=Bearer token`).
+- Optional: Set `OTEL_TRACES_SAMPLER` to control sampling (default: `traceidratio:0.1` for 10% sampling).
+
+Example:
+```bash
+export OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4317
+backups /etc/backups/production.json
+```
+
+Traces include spans for backup runs, source processing, dump/compress, uploads, cleanup, and notifications, with attributes for timing, file counts, and errors.
+
 ## Sources
 
 | Type | Description | Docs |

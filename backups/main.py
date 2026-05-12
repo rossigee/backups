@@ -11,12 +11,27 @@ import logging
 import logging.handlers
 import json
 
+# OpenTelemetry imports (optional)
+try:
+    from opentelemetry import trace
+    from opentelemetry.sdk.trace import TracerProvider
+    from opentelemetry.sdk.trace.export import BatchSpanProcessor
+    from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import OTLPSpanExporter
+    from opentelemetry.sdk.resources import SERVICE_NAME, Resource
+    from opentelemetry.sdk.trace.sampling import TraceIdRatioBasedSampler
+    OTEL_AVAILABLE = True
+except ImportError:
+    OTEL_AVAILABLE = False
+
 import backups.stats
 import backups.sources
 import backups.destinations
 import backups.notifications
 
 from backups.exceptions import BackupException
+
+# Global tracer (initialized if OTEL enabled)
+tracer = None
 
 # Default set of modules to import
 default_modules = [
@@ -52,6 +67,91 @@ class BackupRunInstance:
         self.stats = backups.stats.BackupRunStatistics()
 
     def run(self):
+        if tracer:
+            with tracer.start_as_current_span("backup_run") as root_span:
+                root_span.set_attribute("hostname", self.hostname)
+                self._run_with_tracing()
+        else:
+            self._run_without_tracing()
+
+    def _run_with_tracing(self):
+        # Loop through the defined source modules...
+        for source in self.sources:
+            with tracer.start_as_current_span("process_source") as source_span:
+                source_span.set_attribute("source.id", source.id)
+                source_span.set_attribute("source.name", source.name)
+                source_span.set_attribute("hostname", self.hostname)
+
+                # Trigger notifications as required
+                for notification in self.notifications:
+                    with tracer.start_as_current_span("notify_start") as notify_span:
+                        notify_span.set_attribute("notification.type", notification.__class__.__name__)
+                        notification._notify_start(source, self.hostname)
+
+                try:
+                    # Dump and compress
+                    starttime = time.time()
+                    self.stats.starttime = datetime.datetime.now()
+                    with tracer.start_as_current_span("dump_and_compress") as dump_span:
+                        dumpfiles = source.dump_and_compress(self.stats)
+                        if not isinstance(dumpfiles, list):
+                            dumpfiles = [dumpfiles, ]
+                    endtime = time.time()
+                    self.stats.dumptime = endtime - starttime
+                    dump_span.set_attribute("dumptime", self.stats.dumptime)
+                    dump_span.set_attribute("file.count", len(dumpfiles))
+
+                    # Add up backup file sizes
+                    totalsize = 0
+                    for dumpfile in dumpfiles:
+                        totalsize = totalsize + os.path.getsize(dumpfile)
+                    self.stats.size = totalsize
+                    dump_span.set_attribute("total.size", totalsize)
+
+                    # Send each dump file to each listed destination
+                    starttime = time.time()
+                    self.stats.dumpedfiles = []
+                    self.stats.retainedfiles = []
+                    with tracer.start_as_current_span("upload_files") as upload_span:
+                        for dumpfile in dumpfiles:
+                            for destination in self.destinations:
+                                uploaded = destination.send(source.id, source.name, dumpfile)
+                                self.stats.dumpedfiles.append(uploaded)
+                                retained = destination.cleanup(source.id, source.name)
+                                self.stats.retainedfiles += retained
+                    endtime = time.time()
+                    self.stats.endtime = datetime.datetime.now()
+                    self.stats.uploadtime = endtime - starttime
+                    upload_span.set_attribute("uploadtime", self.stats.uploadtime)
+                    upload_span.set_attribute("dumped.count", len(self.stats.dumpedfiles))
+                    upload_span.set_attribute("retained.count", len(self.stats.retainedfiles))
+
+                    # Trigger success notifications as required
+                    for notification in self.notifications:
+                        with tracer.start_as_current_span("notify_success") as notify_span:
+                            notify_span.set_attribute("notification.type", notification.__class__.__name__)
+                            notification._notify_success(source, self.hostname, dumpfile, self.stats)
+
+                except Exception as e:
+                    import traceback
+                    traceback.print_exc()
+                    trace.get_current_span().record_exception(e)
+                    trace.get_current_span().set_status(trace.Status(trace.StatusCode.ERROR, str(e)))
+                    # Trigger notifications as required
+                    for notification in self.notifications:
+                        with tracer.start_as_current_span("notify_failure") as notify_span:
+                            notify_span.set_attribute("notification.type", notification.__class__.__name__)
+                            notify_span.set_attribute("error", str(e))
+                            notification._notify_failure(source, self.hostname, e)
+
+                finally:
+                    # Done with the dump file now
+                    if 'dumpfile' in locals() and os.path.isfile(dumpfile):
+                       os.unlink(dumpfile)
+
+        logging.debug("Complete.")
+
+    def _run_without_tracing(self):
         # Loop through the defined source modules...
         for source in self.sources:
             # Trigger notifications as required
@@ -118,6 +218,27 @@ def main():
         args = parser.parse_args()
         configfile = args.configfile[0]
 
+        # Initialize OpenTelemetry tracing if OTEL_EXPORTER_OTLP_ENDPOINT is set
+        global tracer
+        if OTEL_AVAILABLE and os.getenv("OTEL_EXPORTER_OTLP_ENDPOINT"):
+            resource = Resource.create({
+                SERVICE_NAME: "backups",
+                "service.version": "2.5.0",
+            })
+            trace_provider = TracerProvider(
+                resource=resource,
+                sampler=TraceIdRatioBasedSampler(0.1)  # Sample 10% of traces
+            )
+            otlp_exporter = OTLPSpanExporter(
+                endpoint=os.getenv("OTEL_EXPORTER_OTLP_ENDPOINT"),
+                insecure=True,  # Assume insecure for now; can be made configurable
+            )
+            span_processor = BatchSpanProcessor(otlp_exporter)
+            trace_provider.add_span_processor(span_processor)
+            trace.set_tracer_provider(trace_provider)
+            tracer = trace.get_tracer("backups.tracer")
+            logging.info("OpenTelemetry tracing enabled.")
+
         # Enable logging if verbosity requested
         if args.debug:
             logging.basicConfig(level=logging.DEBUG)
@@ -174,6 +295,11 @@ def main():
         instance.sources = sources
         instance.destinations = destinations
         instance.run()
+
+        # Shutdown tracing if enabled
+        if tracer:
+            trace.get_tracer_provider().shutdown()
+            logging.info("OpenTelemetry tracing shut down.")
 
     except KeyboardInterrupt :
         sys.exit()
