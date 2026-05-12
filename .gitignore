@@ -8,3 +8,7 @@ backups.egg-info
 MANIFEST
 build
 dist
+*.tar.gz
+*.deb
+deb_dist/
+stdeb.cfg
