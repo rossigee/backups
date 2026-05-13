@@ -16,6 +16,7 @@ class Snapshot(BackupSource):
         self.vol = config['volume_id']
         self.datestr = datetime.datetime.utcnow().strftime("%Y-%m-%d")
         self.az = config['availability_zone']
+        self.credentials = config.get('credentials')
         self.aws_access_key = config['credentials']['aws_access_key_id']
         self.aws_secret_key = config['credentials']['aws_secret_access_key']
 
@@ -33,7 +34,7 @@ class Snapshot(BackupSource):
         statfile.write(json.dumps({
             'status': "OK",
             'retval': str(retval)
-        }))
+        }).encode())
         statfile.close()
         return [statfilename, ]
 
