@@ -23,6 +23,7 @@ setup(name = 'backups',
     install_requires = [
         'requests',
         'python-dateutil',
+        'paramiko',
     ],
     extras_require = {
         'tracing': [

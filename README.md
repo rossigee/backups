@@ -78,6 +78,7 @@ Traces include spans for backup runs, source processing, dump/compress, uploads,
 |------|-------------|------|
 | `folder` | Local directory via `tar` | [docs/sources/folder.md](docs/sources/folder.md) |
 | `folder-ssh` | Remote directory via SSH + `tar` | [docs/sources/folderssh.md](docs/sources/folderssh.md) |
+| `sftp-folder` | Remote directory via SFTP | [docs/sources/sftpfolder.md](docs/sources/sftpfolder.md) |
 | `mysql` | MySQL/MariaDB via `mysqldump` | [docs/sources/mysql.md](docs/sources/mysql.md) |
 | `mysql-ssh` | MySQL via SSH tunnel | [docs/sources/mysqlssh.md](docs/sources/mysqlssh.md) |
 | `postgresql` | PostgreSQL via `pg_dump` | [docs/sources/postgresql.md](docs/sources/postgresql.md) |

@@ -11,6 +11,7 @@ from backups.sources.postgresql import PostgreSQL
 from backups.sources.folderssh import FolderSSH
 from backups.sources.lvmssh import LVMLogicalVolume, dev_mapper_name
 from backups.sources.snapshot import Snapshot
+from backups.sources.sftpfolder import SFTPFolder
 from backups.exceptions import BackupException
 
 # Azure SDK is optional; inject stubs before importing the module
@@ -613,3 +614,231 @@ class TestAzureManagedDisk:
         assert disk.disk_name == 'datadisk'
         assert disk.retain_snapshots == 3
         assert disk.type == 'AzureManagedDisk'
+
+
+class TestSFTPFolder:
+    def test_init(self):
+        config = {
+            'id': 'test-sftp',
+            'sshhost': 'example.com',
+            'sshuser': 'backupuser',
+            'path': '/remote/path',
+            'password': 'secret',
+            'excludes': ['*.log'],
+        }
+        source = SFTPFolder(config)
+        assert source.sshhost == 'example.com'
+        assert source.sshuser == 'backupuser'
+        assert source.sshport == 22
+        assert source.path == '/remote/path'
+        assert source.password == 'secret'
+        assert source.key_filename is None
+        assert source.excludes == ['*.log']
+        assert source.type == 'SFTPFolder'
+
+    def test_init_defaults(self):
+        config = {
+            'id': 'test-sftp',
+            'sshhost': 'example.com',
+            'sshuser': 'backupuser',
+            'path': '/remote/path',
+        }
+        source = SFTPFolder(config)
+        assert source.sshport == 22
+        assert source.excludes == []
+        assert source.password is None
+        assert source.key_filename is None
+
+    def test_init_custom_port(self):
+        config = {
+            'id': 'test-sftp',
+            'sshhost': 'example.com',
+            'sshuser': 'backupuser',
+            'path': '/remote/path',
+            'sshport': 2222,
+            'key_filename': '/path/to/key',
+        }
+        source = SFTPFolder(config)
+        assert source.sshport == 2222
+        assert source.key_filename == '/path/to/key'
+
+    def test_walk(self):
+        import stat as stat_module
+        source = SFTPFolder({
+            'id': 'test',
+            'sshhost': 'h',
+            'sshuser': 'u',
+            'path': '/remote',
+        })
+        mock_sftp = Mock()
+
+        def listdir_attr_side_effect(path):
+            if path == '/remote':
+                dir_attr = Mock()
+                dir_attr.filename = 'subdir'
+                dir_attr.st_mode = stat_module.S_IFDIR | 0o755
+                file_attr = Mock()
+                file_attr.filename = 'file.txt'
+                file_attr.st_mode = stat_module.S_IFREG | 0o644
+                return [dir_attr, file_attr]
+            elif path == '/remote/subdir':
+                nested_attr = Mock()
+                nested_attr.filename = 'nested.txt'
+                nested_attr.st_mode = stat_module.S_IFREG | 0o644
+                return [nested_attr]
+            return []
+
+        mock_sftp.listdir_attr.side_effect = listdir_attr_side_effect
+
+        result = list(source._walk(mock_sftp, '/remote'))
+
+        assert len(result) == 2
+        assert result[0] == ('/remote', ['subdir'], ['file.txt'])
+        assert result[1] == ('/remote/subdir', [], ['nested.txt'])
+
+    @patch('backups.sources.sftpfolder.tarfile.open')
+    @patch('backups.sources.sftpfolder.paramiko.SSHClient')
+    def test_dump_success(self, mock_ssh_client, mock_tar_open):
+        import stat as stat_module
+        config = {
+            'id': 'test-sftp',
+            'sshhost': 'example.com',
+            'sshuser': 'backupuser',
+            'path': '/remote/path',
+        }
+        source = SFTPFolder(config)
+        source.id = 'testid'
+        source.name = 'testname'
+        source.tmpdir = '/tmp'
+
+        mock_client = Mock()
+        mock_ssh_client.return_value = mock_client
+        mock_sftp = Mock()
+        mock_client.open_sftp.return_value = mock_sftp
+
+        file_attr = Mock()
+        file_attr.filename = 'file.txt'
+        file_attr.st_mode = stat_module.S_IFREG | 0o644
+        mock_sftp.listdir_attr.return_value = [file_attr]
+
+        stat_result = Mock()
+        stat_result.st_size = 100
+        stat_result.st_mtime = 1234567890
+        stat_result.st_mode = stat_module.S_IFREG | 0o644
+        mock_sftp.stat.return_value = stat_result
+
+        mock_file = MagicMock()
+        mock_sftp.open.return_value = MagicMock()
+        mock_sftp.open.return_value.__enter__.return_value = mock_file
+
+        mock_tar = MagicMock()
+        mock_tar_open.return_value = MagicMock()
+        mock_tar_open.return_value.__enter__.return_value = mock_tar
+
+        result = source.dump()
+
+        assert result == ['/tmp/testid.tar']
+        mock_client.connect.assert_called_once_with(
+            hostname='example.com', port=22, username='backupuser')
+        mock_client.open_sftp.assert_called_once()
+        mock_sftp.listdir_attr.assert_called_once_with('/remote/path')
+        mock_sftp.stat.assert_called_once_with('/remote/path/file.txt')
+        mock_tar.addfile.assert_called_once()
+        mock_client.close.assert_called_once()
+
+    @patch('backups.sources.sftpfolder.paramiko.SSHClient')
+    def test_dump_connection_error(self, mock_ssh_client):
+        config = {
+            'id': 'test-sftp',
+            'sshhost': 'example.com',
+            'sshuser': 'backupuser',
+            'path': '/remote/path',
+        }
+        source = SFTPFolder(config)
+
+        mock_client = Mock()
+        mock_ssh_client.return_value = mock_client
+        mock_client.connect.side_effect = Exception("Connection refused")
+
+        with pytest.raises(BackupException, match="SFTP connection error"):
+            source.dump()
+
+        mock_client.close.assert_called_once()
+
+    @patch('backups.sources.sftpfolder.tarfile.open')
+    @patch('backups.sources.sftpfolder.paramiko.SSHClient')
+    def test_dump_with_excludes(self, mock_ssh_client, mock_tar_open):
+        import stat as stat_module
+        config = {
+            'id': 'test-sftp',
+            'sshhost': 'example.com',
+            'sshuser': 'backupuser',
+            'path': '/remote/path',
+            'excludes': ['*.log'],
+        }
+        source = SFTPFolder(config)
+        source.tmpdir = '/tmp'
+        source.id = 'testid'
+
+        mock_client = Mock()
+        mock_ssh_client.return_value = mock_client
+        mock_sftp = Mock()
+        mock_client.open_sftp.return_value = mock_sftp
+
+        log_attr = Mock()
+        log_attr.filename = 'access.log'
+        log_attr.st_mode = stat_module.S_IFREG | 0o644
+        txt_attr = Mock()
+        txt_attr.filename = 'readme.txt'
+        txt_attr.st_mode = stat_module.S_IFREG | 0o644
+        mock_sftp.listdir_attr.return_value = [log_attr, txt_attr]
+
+        stat_result = Mock()
+        stat_result.st_size = 100
+        stat_result.st_mtime = 1234567890
+        stat_result.st_mode = stat_module.S_IFREG | 0o644
+        mock_sftp.stat.return_value = stat_result
+
+        mock_file = MagicMock()
+        mock_sftp.open.return_value = MagicMock()
+        mock_sftp.open.return_value.__enter__.return_value = mock_file
+
+        mock_tar = MagicMock()
+        mock_tar_open.return_value = MagicMock()
+        mock_tar_open.return_value.__enter__.return_value = mock_tar
+
+        result = source.dump()
+
+        assert result == ['/tmp/testid.tar']
+        assert mock_tar.addfile.call_count == 1
+        mock_client.close.assert_called_once()
+
+    @patch('backups.sources.sftpfolder.tarfile.open')
+    @patch('backups.sources.sftpfolder.paramiko.SSHClient')
+    def test_dump_download_error(self, mock_ssh_client, mock_tar_open):
+        import stat as stat_module
+        config = {
+            'id': 'test-sftp',
+            'sshhost': 'example.com',
+            'sshuser': 'backupuser',
+            'path': '/remote/path',
+        }
+        source = SFTPFolder(config)
+        source.tmpdir = '/tmp'
+
+        mock_client = Mock()
+        mock_ssh_client.return_value = mock_client
+        mock_sftp = Mock()
+        mock_client.open_sftp.return_value = mock_sftp
+
+        file_attr = Mock()
+        file_attr.filename = 'file.txt'
+        file_attr.st_mode = stat_module.S_IFREG | 0o644
+        mock_sftp.listdir_attr.return_value = [file_attr]
+
+        mock_sftp.stat.side_effect = Exception("Permission denied")
+
+        with pytest.raises(BackupException, match="Error downloading"):
+            source.dump()
+
+        mock_client.close.assert_called_once()
