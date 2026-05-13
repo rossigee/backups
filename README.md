@@ -106,6 +106,7 @@ All destinations support `retention_copies` and/or `retention_days` to automatic
 | `flagfile` | Write a flag file for monitoring | [docs/notifications/flagfile.md](docs/notifications/flagfile.md) |
 | `prometheus` | Push metrics to Prometheus Pushgateway | [docs/notifications/prometheus.md](docs/notifications/prometheus.md) |
 | `elasticsearch` | Write stats documents to Elasticsearch | [docs/notifications/elasticsearch.md](docs/notifications/elasticsearch.md) |
+| `cloudflare-backup-registry` | Backup run reports to Cloudflare Backup Registry | [docs/notifications/cloudflare-backup-registry.md](docs/notifications/cloudflare-backup-registry.md) |
 
 ## Scheduling
 
