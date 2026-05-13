@@ -29,6 +29,7 @@ setup(name = 'backups',
             'opentelemetry-api',
             'opentelemetry-sdk',
             'opentelemetry-exporter-otlp-proto-grpc',
+            'grpcio>=1.80.0',
         ]
     },
     entry_points = {
