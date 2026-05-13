@@ -52,10 +52,17 @@ Or asymmetric (GPG public key):
 
 OpenTelemetry OTLP tracing is supported for observability. Tracing is disabled by default (zero performance impact).
 
+Install the optional tracing dependencies:
+
+```bash
+pip install backups[tracing]
+```
+
 To enable tracing:
-- Set the `OTEL_EXPORTER_OTLP_ENDPOINT` environment variable to your OTLP collector/backend URL (e.g., `http://localhost:4317` for gRPC).
+- Set `OTEL_EXPORTER_OTLP_ENDPOINT` to your OTLP collector URL (e.g., `http://localhost:4317` for gRPC).
 - Optional: Set `OTEL_EXPORTER_OTLP_HEADERS` for authentication (e.g., `authorization=Bearer token`).
-- Optional: Set `OTEL_TRACES_SAMPLER` to control sampling (default: `traceidratio:0.1` for 10% sampling).
+- Optional: Set `OTEL_EXPORTER_OTLP_INSECURE=true` to disable TLS (default: TLS enabled).
+- Optional: Set `OTEL_TRACES_SAMPLER` and `OTEL_TRACES_SAMPLER_ARG` to control sampling (e.g., `OTEL_TRACES_SAMPLER=traceidratio` and `OTEL_TRACES_SAMPLER_ARG=0.1` for 10%).
 
 Example:
 ```bash
