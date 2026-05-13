@@ -1,7 +1,7 @@
 import os, os.path
 import json
 import requests
-import urllib
+import urllib.parse
 
 import logging
 
@@ -20,7 +20,7 @@ class Telegram(BackupNotification):
         filesize = stats.getSizeDescription()
         message = "Backup of '%s' (%s) on '%s' was successful [size: %s]." % (source.name, source.type, hostname, filesize)
         url = "https://api.telegram.org/bot" + self.api_token + "/sendMessage"
-        data = urllib.urlencode({
+        data = urllib.parse.urlencode({
             'chat_id': self.chat_id,
             'text': message
         })
@@ -29,12 +29,12 @@ class Telegram(BackupNotification):
             r.raise_for_status()
             logging.info("Sent success notification via Telegram.")
         except requests.exceptions.HTTPError as err:
-            logging.error("Unable to send Telegram success notification: " + err)
+            logging.error("Unable to send Telegram success notification: " + str(err))
 
     def notify_failure(self, source, hostname, e):
-        message = "Backup of '%s' (%s) on '%s' failed: %s" % (source.name, source.type, hostname, str(e)),
+        message = "Backup of '%s' (%s) on '%s' failed: %s" % (source.name, source.type, hostname, str(e))
         url = "https://api.telegram.org/bot" + self.api_token + "/sendMessage"
-        data = urllib.urlencode({
+        data = urllib.parse.urlencode({
             'chat_id': self.chat_id,
             'text': message
         })
@@ -43,4 +43,4 @@ class Telegram(BackupNotification):
             r.raise_for_status()
             logging.info("Sent failure notification via Telegram.")
         except requests.exceptions.HTTPError as err:
-            logging.error("Unable to send Telegram failure notification: " + err)
+            logging.error("Unable to send Telegram failure notification: " + str(err))

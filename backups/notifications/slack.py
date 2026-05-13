@@ -28,7 +28,7 @@ class Slack(BackupNotification):
             r.raise_for_status()
             logging.info("Sent failure notification via Slack.")
         except requests.exceptions.HTTPError as err:
-            logging.error("Unable to send Slack failure notification: " + err)
+            logging.error("Unable to send Slack failure notification: " + str(err))
 
     def notify_start(self, source, hostname):
         data = {

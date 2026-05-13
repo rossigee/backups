@@ -22,7 +22,7 @@ class Discord(BackupNotification):
             r.raise_for_status()
             logging.info("Sent success notification via Discord.")
         except requests.exceptions.HTTPError as err:
-            logging.error("Unable to send Discord success notification: " + err)
+            logging.error("Unable to send Discord success notification: " + str(err))
 
     def notify_failure(self, source, hostname, e):
         headers = {
@@ -37,4 +37,4 @@ class Discord(BackupNotification):
             r.raise_for_status()
             logging.info("Sent failure notification via Discord.")
         except requests.exceptions.HTTPError as err:
-            logging.error("Unable to send Discord failure notification: " + err)
+            logging.error("Unable to send Discord failure notification: " + str(err))
