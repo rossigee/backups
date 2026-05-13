@@ -18,6 +18,17 @@ Pushes backup metrics to a Prometheus Pushgateway after each successful backup.
 }
 ```
 
+With API key authentication:
+
+```json
+{
+  "id": "prometheus-notify",
+  "type": "prometheus",
+  "url": "http://pushgateway.monitoring.svc:9091",
+  "api_key": "YOUR_API_KEY"
+}
+```
+
 Without authentication:
 
 ```json
@@ -34,6 +45,7 @@ Without authentication:
 |-----|----------|---------|
 | `id` | Yes | Unique identifier for this notification. |
 | `url` | Yes | URL of the Prometheus Pushgateway. |
+| `api_key` | No | API key sent as `X-API-Key` header. Takes precedence over `credentials`. |
 | `credentials.username` | No | Basic auth username for the Pushgateway. |
 | `credentials.password` | No | Basic auth password for the Pushgateway. |
 

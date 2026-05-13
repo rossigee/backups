@@ -21,6 +21,37 @@ class TestPrometheus:
         prom = Prometheus(config)
         assert prom.username is None
         assert prom.password is None
+        assert prom.api_key is None
+
+    def test_init_api_key(self):
+        config = {'url': 'http://prometheus:9091', 'api_key': 'secret'}
+        prom = Prometheus(config)
+        assert prom.api_key == 'secret'
+        assert prom.username is None
+
+    @patch('backups.notifications.prometheus.push_to_gateway')
+    @patch('backups.notifications.prometheus.CollectorRegistry')
+    @patch('backups.notifications.prometheus.Gauge')
+    @patch('backups.notifications.prometheus.Summary')
+    def test_notify_success_api_key_auth(self, mock_summary, mock_gauge, mock_registry, mock_push):
+        config = {'url': 'http://prometheus:9091', 'api_key': 'secret'}
+        prom = Prometheus(config)
+
+        mock_source = Mock()
+        mock_source.id = 'testsource'
+        mock_stats = Mock()
+        mock_stats.size = 1000
+        mock_stats.dumptime = 10.0
+        mock_stats.uploadtime = 5.0
+        mock_stats.retained_copies = ['file1']
+
+        prom.notify_success(mock_source, 'testhost', 'test.tar', mock_stats)
+
+        mock_push.assert_called_once()
+        _, kwargs = mock_push.call_args
+        handler = kwargs['handler']
+        _, _, _, headers, _ = handler('http://prometheus:9091', 'POST', 30, {}, b'')
+        assert headers.get('X-API-Key') == 'secret'
 
     @patch('backups.notifications.prometheus.push_to_gateway')
     @patch('backups.notifications.prometheus.CollectorRegistry')
