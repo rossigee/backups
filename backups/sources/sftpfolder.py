@@ -21,21 +21,29 @@ class SFTPFolder(BackupSource):
         self.path = config['path'].rstrip('/')
         self.password = config.get('password')
         self.key_filename = config.get('key_filename')
+        self.known_hosts_file = config.get('known_hosts_file')
         self.excludes = []
         if 'excludes' in config:
             self.excludes = config['excludes']
 
-    def _walk(self, sftp, remote_path):
-        dirs = []
-        files = []
+    def _walk(self, sftp, remote_path, excludes=None):
+        if excludes is None:
+            excludes = []
+        dir_attrs = []
+        file_attrs = []
         for attr in sftp.listdir_attr(remote_path):
             if stat.S_ISDIR(attr.st_mode):
-                dirs.append(attr.filename)
+                excluded = any(
+                    fnmatch.fnmatch(attr.filename, ex) or fnmatch.fnmatch(attr.filename + '/', ex)
+                    for ex in excludes
+                )
+                if not excluded:
+                    dir_attrs.append(attr)
             else:
-                files.append(attr.filename)
-        yield remote_path, dirs, files
-        for d in dirs:
-            yield from self._walk(sftp, '%s/%s' % (remote_path, d))
+                file_attrs.append(attr)
+        yield remote_path, dir_attrs, file_attrs
+        for dattr in dir_attrs:
+            yield from self._walk(sftp, '%s/%s' % (remote_path, dattr.filename), excludes)
 
     def dump(self):
         tarfilename = '%s/%s.tar' % (self.tmpdir, self.id)
@@ -43,7 +51,10 @@ class SFTPFolder(BackupSource):
                      self.name, self.type, self.sshuser, self.sshhost, self.path)
 
         client = paramiko.SSHClient()
-        client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+        client.load_system_host_keys()
+        if self.known_hosts_file:
+            client.load_host_keys(self.known_hosts_file)
+        client.set_missing_host_key_policy(paramiko.RejectPolicy())
         try:
             connect_kwargs = {
                 'hostname': self.sshhost,
@@ -58,26 +69,32 @@ class SFTPFolder(BackupSource):
 
             sftp = client.open_sftp()
             with tarfile.open(tarfilename, 'w') as tar:
-                for root, dirs, files in self._walk(sftp, self.path):
-                    for fname in files:
-                        remote_path = '%s/%s' % (root, fname)
+                for root, dir_attrs, file_attrs in self._walk(sftp, self.path, self.excludes):
+                    for dattr in dir_attrs:
+                        arcname = os.path.relpath('%s/%s' % (root, dattr.filename), self.path)
+                        info = tarfile.TarInfo(name=arcname)
+                        info.type = tarfile.DIRTYPE
+                        info.mtime = dattr.st_mtime
+                        info.mode = stat.S_IMODE(dattr.st_mode)
+                        tar.addfile(info)
+
+                    for fattr in file_attrs:
+                        remote_path = '%s/%s' % (root, fattr.filename)
                         arcname = os.path.relpath(remote_path, self.path)
 
-                        excluded = False
-                        for exclude in self.excludes:
-                            if fnmatch.fnmatch(arcname, exclude) or fnmatch.fnmatch(fname, exclude):
-                                excluded = True
-                                break
+                        excluded = any(
+                            fnmatch.fnmatch(arcname, ex) or fnmatch.fnmatch(fattr.filename, ex)
+                            for ex in self.excludes
+                        )
                         if excluded:
                             continue
 
                         try:
-                            attr = sftp.stat(remote_path)
                             with sftp.open(remote_path, 'rb') as f:
                                 info = tarfile.TarInfo(name=arcname)
-                                info.size = attr.st_size
-                                info.mtime = attr.st_mtime
-                                info.mode = stat.S_IMODE(attr.st_mode)
+                                info.size = fattr.st_size
+                                info.mtime = fattr.st_mtime
+                                info.mode = stat.S_IMODE(fattr.st_mode)
                                 tar.addfile(info, f)
                         except Exception as e:
                             raise BackupException(

@@ -32,7 +32,8 @@ Backs up a remote directory over SFTP by recursively walking and packing files i
 | `sshport` | No | SSH port (defaults to `22`). |
 | `password` | No | Password for password-based authentication. |
 | `key_filename` | No | Path to a private key file for key-based authentication. |
-| `excludes` | No | Array of glob patterns (fnmatch) to exclude from the backup. Patterns are matched against both the filename and the archive path. |
+| `known_hosts_file` | No | Path to an additional known_hosts file to load alongside the system known_hosts. |
+| `excludes` | No | Array of glob patterns (fnmatch) to exclude from the backup. File patterns (e.g. `*.log`) are matched against the filename and archive path. Directory patterns (e.g. `cache/`) prune the entire subtree from the walk. |
 | `passphrase` | No | Passphrase for symmetric GPG encryption. |
 | `recipients` | No | Array of GPG key recipients for asymmetric encryption. |
 | `compress_only` | No | Set to `1` to skip encryption and only compress. |
@@ -40,3 +41,5 @@ Backs up a remote directory over SFTP by recursively walking and packing files i
 ## Notes
 
 The backup host must have network access to the remote host on the configured port. Authentication can use either a password or an SSH private key.
+
+The remote host's key must be present in the system known_hosts file (`~/.ssh/known_hosts`) before running a backup. Use `ssh-keyscan` to add it first, or specify an alternative file via `known_hosts_file`. Connections to hosts with unknown keys are rejected.
