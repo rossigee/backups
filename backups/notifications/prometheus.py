@@ -17,9 +17,12 @@ class Prometheus(BackupNotification):
         self.url = config['url']
         self.username = None
         self.password = None
+        self.api_key = None
         if 'credentials' in config:
             self.username = config['credentials']['username']
             self.password = config['credentials']['password']
+        if 'api_key' in config:
+            self.api_key = config['api_key']
         self.notify_on_success = True
         self.notify_on_failure = False
 
@@ -37,7 +40,13 @@ class Prometheus(BackupNotification):
         g = Gauge('backup_timestamp', 'Time backup completed as seconds-since-the-epoch', registry=registry)
         g.set_to_current_time()
 
+        def apikey_auth_handler(url, method, timeout, headers, data):
+            headers['X-API-Key'] = self.api_key
+            return url, method, timeout, headers, data
+
         def auth_handler(url, method, timeout, headers, data):
+            if self.api_key:
+                return apikey_auth_handler(url, method, timeout, headers, data)
             return basic_auth_handler(url, method, timeout, headers, data, self.username, self.password)
 
         try:
