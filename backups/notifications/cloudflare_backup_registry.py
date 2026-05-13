@@ -11,6 +11,7 @@ from backups.notifications import backupnotification
 @backupnotification('cloudflare-backup-registry')
 class CloudflareBackupRegistry(BackupNotification):
     def __init__(self, config):
+        config.setdefault('notify_on_success', True)
         BackupNotification.__init__(self, config, 'cloudflare-backup-registry')
         self.url = config['url']
         self.token = config.get('token')
