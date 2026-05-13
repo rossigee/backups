@@ -13,6 +13,7 @@ class TestPrometheus:
         assert prom.url == 'http://prometheus:9091'
         assert prom.username == 'user'
         assert prom.password == 'pass'
+        assert prom.api_key is None
         assert prom.notify_on_success == True
         assert prom.notify_on_failure == False
 
@@ -29,11 +30,13 @@ class TestPrometheus:
         assert prom.api_key == 'secret'
         assert prom.username is None
 
-    @patch('backups.notifications.prometheus.push_to_gateway')
+    @patch('backups.notifications.prometheus.requests.put')
+    @patch('backups.notifications.prometheus.generate_latest')
     @patch('backups.notifications.prometheus.CollectorRegistry')
     @patch('backups.notifications.prometheus.Gauge')
     @patch('backups.notifications.prometheus.Summary')
-    def test_notify_success_api_key_auth(self, mock_summary, mock_gauge, mock_registry, mock_push):
+    def test_notify_success_api_key_auth(self, mock_summary, mock_gauge, mock_registry, mock_generate_latest, mock_put):
+        mock_generate_latest.return_value = b'mock data'
         config = {'url': 'http://prometheus:9091', 'api_key': 'secret'}
         prom = Prometheus(config)
 
@@ -47,17 +50,18 @@ class TestPrometheus:
 
         prom.notify_success(mock_source, 'testhost', 'test.tar', mock_stats)
 
-        mock_push.assert_called_once()
-        _, kwargs = mock_push.call_args
-        handler = kwargs['handler']
-        _, _, _, headers, _ = handler('http://prometheus:9091', 'POST', 30, {}, b'')
-        assert headers.get('X-API-Key') == 'secret'
+        mock_put.assert_called_once()
+        args, kwargs = mock_put.call_args
+        assert args[0] == 'http://prometheus:9091/metrics/job/testsource'
+        assert kwargs['headers']['X-API-Key'] == 'secret'
 
-    @patch('backups.notifications.prometheus.push_to_gateway')
+    @patch('backups.notifications.prometheus.requests.put')
+    @patch('backups.notifications.prometheus.generate_latest')
     @patch('backups.notifications.prometheus.CollectorRegistry')
     @patch('backups.notifications.prometheus.Gauge')
     @patch('backups.notifications.prometheus.Summary')
-    def test_notify_success(self, mock_summary, mock_gauge, mock_registry, mock_push):
+    def test_notify_success(self, mock_summary, mock_gauge, mock_registry, mock_generate_latest, mock_put):
+        mock_generate_latest.return_value = b'mock data'
         config = {'url': 'http://prometheus:9091'}
         prom = Prometheus(config)
 
@@ -73,17 +77,16 @@ class TestPrometheus:
 
         prom.notify_success(mock_source, hostname, filename, mock_stats)
 
-        mock_push.assert_called_once()
-        args, kwargs = mock_push.call_args
-        assert 'http://prometheus:9091' in args
-        assert kwargs['job'] == 'testsource'
+        mock_put.assert_called_once()
+        args, kwargs = mock_put.call_args
+        assert 'http://prometheus:9091/metrics/job/testsource' in args
 
-    @patch('backups.notifications.prometheus.push_to_gateway')
-    def test_notify_success_failure(self, mock_push):
+    @patch('backups.notifications.prometheus.requests.put')
+    def test_notify_success_failure(self, mock_put):
         config = {'url': 'http://prometheus:9091'}
         prom = Prometheus(config)
 
-        mock_push.side_effect = Exception('Push failed')
+        mock_put.side_effect = Exception('Push failed')
 
         mock_source = Mock()
         mock_source.id = 'testsource'

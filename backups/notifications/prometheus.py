@@ -3,8 +3,9 @@ import json
 import logging
 import base64
 
-from prometheus_client import CollectorRegistry, Gauge, Summary, push_to_gateway
-from prometheus_client.exposition import basic_auth_handler
+import requests
+
+from prometheus_client import CollectorRegistry, Gauge, Summary, generate_latest, CONTENT_TYPE_LATEST
 
 from backups.exceptions import BackupException
 from backups.notifications import backupnotification
@@ -26,6 +27,16 @@ class Prometheus(BackupNotification):
         self.notify_on_success = True
         self.notify_on_failure = False
 
+    def _get_headers(self):
+        headers = {'Content-Type': CONTENT_TYPE_LATEST}
+        if self.api_key:
+            headers['X-API-Key'] = self.api_key
+        elif self.username is not None and self.password is not None:
+            auth_value = f'{self.username}:{self.password}'.encode()
+            auth_token = base64.b64encode(auth_value).decode()
+            headers['Authorization'] = f'Basic {auth_token}'
+        return headers
+
     def notify_success(self, source, hostname, filename, stats):
         registry = CollectorRegistry()
 
@@ -40,17 +51,11 @@ class Prometheus(BackupNotification):
         g = Gauge('backup_timestamp', 'Time backup completed as seconds-since-the-epoch', registry=registry)
         g.set_to_current_time()
 
-        def apikey_auth_handler(url, method, timeout, headers, data):
-            headers['X-API-Key'] = self.api_key
-            return url, method, timeout, headers, data
-
-        def auth_handler(url, method, timeout, headers, data):
-            if self.api_key:
-                return apikey_auth_handler(url, method, timeout, headers, data)
-            return basic_auth_handler(url, method, timeout, headers, data, self.username, self.password)
-
         try:
-            push_to_gateway(self.url, job=source.id, registry=registry, handler=auth_handler)
+            data = generate_latest(registry)
+            url = '%s/metrics/job/%s' % (self.url.rstrip('/'), source.id)
+            resp = requests.put(url, data=data, headers=self._get_headers())
+            resp.raise_for_status()
             logging.info("Pushed metrics for job '%s' to gateway (%s)" % (source.id, self.url))
         except Exception as e:
             logging.error("Unable to push metrics for job '%s' to gateway (%s): %s" % (source.id, self.url, str(e)))
