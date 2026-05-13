@@ -101,30 +101,132 @@ class TestBackupRunStatistics:
         stats.size = size
         assert stats.getSizeDescription() == expected
 
+otel = pytest.importorskip("opentelemetry", reason="opentelemetry-sdk not installed")
+
+from opentelemetry.sdk.trace import TracerProvider as _TracerProvider
+from opentelemetry.sdk.trace.export.in_memory_span_exporter import InMemorySpanExporter
+from opentelemetry.sdk.trace.export import SimpleSpanProcessor
+from backups.main import BackupRunInstance
+
+
+def _make_test_tracer():
+    exporter = InMemorySpanExporter()
+    provider = _TracerProvider()
+    provider.add_span_processor(SimpleSpanProcessor(exporter))
+    return provider.get_tracer("test"), exporter
+
+
 class TestTracing:
-    @patch.dict(os.environ, {"OTEL_EXPORTER_OTLP_ENDPOINT": "http://localhost:4317"})
-    @patch('backups.main.trace')
-    @patch('backups.main.OTEL_AVAILABLE', True)
-    def test_tracing_enabled(self, mock_trace):
-        mock_tracer_provider = MagicMock()
-        mock_trace.get_tracer_provider.return_value = mock_tracer_provider
-        mock_tracer_provider.shutdown = MagicMock()
+    def _make_instance(self, tracer):
+        instance = BackupRunInstance()
+        instance.tracer = tracer
+        instance.sources = []
+        instance.destinations = []
+        instance.notifications = []
+        return instance
 
-        # Reset global tracer
-        backups.main.tracer = None
+    def test_backup_run_span_created(self):
+        tracer, exporter = _make_test_tracer()
+        instance = self._make_instance(tracer)
+        instance.run()
+        names = [s.name for s in exporter.get_finished_spans()]
+        assert "backup_run" in names
 
-        # Call main init logic (simulate)
-        # Since main() is complex, test the init part
-        # For simplicity, assume init works if no exception
+    def test_source_spans_created(self):
+        tracer, exporter = _make_test_tracer()
+        instance = self._make_instance(tracer)
 
-        # Actually, since it's global, hard to test.
-        # Just check that tracer is set when env is set
-        assert os.getenv("OTEL_EXPORTER_OTLP_ENDPOINT") is not None
-        # In real test, would call the init code, but for now, placeholder
+        mock_source = Mock()
+        mock_source.id = "src-1"
+        mock_source.name = "Test Source"
+        mock_source.dump_and_compress.return_value = []
+        instance.sources = [mock_source]
 
-    @patch.dict(os.environ, {}, clear=True)
-    def test_tracing_disabled_by_default(self):
-        # Reset
-        backups.main.tracer = None
-        # Without env, tracer should remain None
-        assert backups.main.tracer is None
+        instance.run()
+        names = [s.name for s in exporter.get_finished_spans()]
+        assert "process_source" in names
+        assert "dump_and_compress" in names
+        assert "upload_files" in names
+
+    def test_span_attributes_set_inside_span(self):
+        tracer, exporter = _make_test_tracer()
+        instance = self._make_instance(tracer)
+
+        import tempfile
+        with tempfile.NamedTemporaryFile(delete=False) as f:
+            f.write(b"data")
+            tmpfile = f.name
+
+        try:
+            mock_source = Mock()
+            mock_source.id = "src-1"
+            mock_source.name = "Test Source"
+            mock_source.dump_and_compress.return_value = [tmpfile]
+
+            mock_dest = Mock()
+            mock_dest.send.return_value = tmpfile
+            mock_dest.cleanup.return_value = []
+            instance.sources = [mock_source]
+            instance.destinations = [mock_dest]
+
+            instance.run()
+
+            spans = {s.name: s for s in exporter.get_finished_spans()}
+            dump_span = spans["dump_and_compress"]
+            assert dump_span.attributes["file.count"] == 1
+            assert dump_span.attributes["total.size"] == 4
+            assert "dumptime" in dump_span.attributes
+
+            upload_span = spans["upload_files"]
+            assert upload_span.attributes["dumped.count"] == 1
+            assert "uploadtime" in upload_span.attributes
+        finally:
+            if os.path.exists(tmpfile):
+                os.unlink(tmpfile)
+
+    def test_failure_notification_on_source_error(self):
+        tracer, exporter = _make_test_tracer()
+        instance = self._make_instance(tracer)
+
+        mock_source = Mock()
+        mock_source.id = "src-1"
+        mock_source.name = "Test Source"
+        mock_source.dump_and_compress.side_effect = RuntimeError("disk full")
+        instance.sources = [mock_source]
+
+        mock_notification = Mock()
+        instance.notifications = [mock_notification]
+
+        instance.run()
+
+        mock_notification._notify_failure.assert_called_once()
+        names = [s.name for s in exporter.get_finished_spans()]
+        assert "notify_failure" in names
+
+    def test_notification_error_does_not_crash_run(self):
+        tracer, exporter = _make_test_tracer()
+        instance = self._make_instance(tracer)
+
+        mock_source = Mock()
+        mock_source.id = "src-1"
+        mock_source.name = "Test Source"
+        mock_source.dump_and_compress.return_value = []
+        instance.sources = [mock_source]
+
+        mock_notification = Mock()
+        mock_notification._notify_success.side_effect = RuntimeError("notify down")
+        instance.notifications = [mock_notification]
+
+        instance.run()
+
+    def test_noop_tracer_when_otel_disabled(self):
+        instance = BackupRunInstance()
+        assert isinstance(instance.tracer, backups.main._NoOpTracer)
+        mock_source = Mock()
+        mock_source.id = "src-1"
+        mock_source.name = "Test"
+        mock_source.dump_and_compress.return_value = []
+        instance.sources = [mock_source]
+        instance.destinations = []
+        instance.notifications = []
+        instance.run()
