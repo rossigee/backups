@@ -84,8 +84,8 @@ jobs:
       - name: Install build dependencies
         run: |
           sudo apt-get update -qq
-          sudo apt-get install -y dh-python python3-all debhelper build-essential fakeroot python3-distutils
-          pip install 'setuptools>=40,<58'
+          sudo apt-get install -y dh-python python3-all debhelper build-essential fakeroot python3.11-venv
+          pip install 'setuptools<70'
 
       - name: Build deb
         run: python3 setup.py --command-packages=stdeb.command bdist_deb
