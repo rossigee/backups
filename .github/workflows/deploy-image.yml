@@ -89,7 +89,7 @@ jobs:
       - name: Build deb
         run: |
           pip install setuptools
-          python3 setup.py --command-packages stdeb.command bdist_deb
+          python3 -m stdeb.command bdist_deb
 
       - name: Upload deb to GitHub Release
         uses: softprops/action-gh-release@v3
