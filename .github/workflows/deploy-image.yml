@@ -84,11 +84,11 @@ jobs:
       - name: Install build dependencies
         run: |
           sudo apt-get update -qq
-          sudo apt-get install -y dh-python python3-all debhelper build-essential
-          pip install stdeb setuptools
+          sudo apt-get install -y dh-python python3-all debhelper build-essential fakeroot
+          pip install 'setuptools<60'
 
       - name: Build deb
-        run: pip install setuptools && python3 setup.py --command-packages=stdeb.command bdist_deb
+        run: python3 setup.py --command-packages=stdeb.command bdist_deb
 
       - name: Upload deb to GitHub Release
         uses: softprops/action-gh-release@v3
