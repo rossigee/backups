@@ -87,7 +87,9 @@ jobs:
           sudo apt-get install -y dh-python python3-all debhelper python3-stdeb
 
       - name: Build deb
-        run: python3 setup.py --command-packages stdeb.command bdist_deb
+        run: |
+          pip install setuptools
+          python3 setup.py --command-packages stdeb.command bdist_deb
 
       - name: Upload deb to GitHub Release
         uses: softprops/action-gh-release@v3
