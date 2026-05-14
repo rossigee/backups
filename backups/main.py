@@ -17,7 +17,7 @@ import json
 try:
     from opentelemetry import trace
     from opentelemetry.sdk.trace import TracerProvider
-    from opentelemetry.sdk.trace.export import BatchSpanProcessor
+    from opentelemetry.sdk.trace.export import SimpleSpanProcessor
     from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import OTLPSpanExporter
     from opentelemetry.sdk.resources import SERVICE_NAME, Resource
     OTEL_AVAILABLE = True
@@ -172,11 +172,17 @@ def main():
         # Read command line arguments
         parser = argparse.ArgumentParser()
         parser.add_argument('configfile', metavar='configfile', nargs=1,
-                   help='name of configuration file to use for this run')
+                    help='name of configuration file to use for this run')
         parser.add_argument('-v', dest='verbose', action='store_true')
         parser.add_argument('-d', dest='debug', action='store_true')
         args = parser.parse_args()
         configfile = args.configfile[0]
+
+        # Enable logging if verbosity requested (must happen before any logging calls)
+        if args.debug:
+            logging.basicConfig(level=logging.DEBUG)
+        elif args.verbose:
+            logging.basicConfig(level=logging.INFO)
 
         # Initialize OpenTelemetry tracing if OTEL_EXPORTER_OTLP_ENDPOINT is set
         otel_tracer = _NoOpTracer()
@@ -193,16 +199,10 @@ def main():
                 endpoint=os.getenv("OTEL_EXPORTER_OTLP_ENDPOINT"),
                 insecure=insecure,
             )
-            trace_provider.add_span_processor(BatchSpanProcessor(otlp_exporter))
+            trace_provider.add_span_processor(SimpleSpanProcessor(otlp_exporter))
             trace.set_tracer_provider(trace_provider)
             otel_tracer = trace.get_tracer("backups.tracer")
             logging.info("OpenTelemetry tracing enabled.")
-
-        # Enable logging if verbosity requested
-        if args.debug:
-            logging.basicConfig(level=logging.DEBUG)
-        elif args.verbose:
-            logging.basicConfig(level=logging.INFO)
 
         # Read our JSON configuration file
         with open(configfile) as json_conf:
