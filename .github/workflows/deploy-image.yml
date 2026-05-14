@@ -84,13 +84,10 @@ jobs:
       - name: Install build dependencies
         run: |
           sudo apt-get update -qq
-          sudo apt-get install -y dh-python python3-all debhelper
-          pip install setuptools stdeb
+          sudo apt-get install -y dh-python python3-all debhelper python3-stdeb
 
       - name: Build deb
-        run: |
-          python3 setup.py sdist
-          py2dsc-deb dist/backups-*.tar.gz
+        run: python3 setup.py --command-packages stdeb.command bdist_deb
 
       - name: Upload deb to GitHub Release
         uses: softprops/action-gh-release@v3
