@@ -1,0 +1,14 @@
+Source: backups
+Maintainer: Ross Golder <ross@golder.org>
+Section: python
+Priority: optional
+Build-Depends: python3-setuptools, python3-all, debhelper (>= 12)
+Standards-Version: 4.7.0
+Homepage: https://github.com/rossigee/backups
+
+Package: python3-backups
+Architecture: all
+Depends: ${misc:Depends}, ${python3:Depends}
+Description: Backup orchestration tool for databases, folders and cloud s
+ A Python backup orchestration tool that cycles through sources (databases, folders, cloud snapshots), compresses and optionally encrypts each backup, uploads to one or more destinations (S3, GCS, B2, Dropbox, local, and more), and reports results via notifications (email, Slack, Discord, Telegram, Prometheus, and more). Supports OpenTelemetry OTLP tracing for observability.
+
