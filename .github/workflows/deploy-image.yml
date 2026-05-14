@@ -85,7 +85,7 @@ jobs:
         run: |
           sudo apt-get update -qq
           sudo apt-get install -y dh-python python3-all debhelper
-          pip install stdeb
+          pip install setuptools stdeb
 
       - name: Build deb
         run: |
