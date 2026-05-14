@@ -69,7 +69,7 @@ jobs:
           platforms: linux/amd64,linux/arm64
 
   build-and-publish-deb:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     needs: test
     if: startsWith(github.ref, 'refs/tags/v')
     steps:
@@ -84,8 +84,8 @@ jobs:
       - name: Install build dependencies
         run: |
           sudo apt-get update -qq
-          sudo apt-get install -y dh-python python3-all debhelper build-essential fakeroot python3.11-venv
-          pip install 'setuptools<70'
+          sudo apt-get install -y dh-python python3-all debhelper build-essential fakeroot
+          pip install setuptools
 
       - name: Build deb
         run: python3 setup.py --command-packages=stdeb.command bdist_deb
