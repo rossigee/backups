@@ -11,4 +11,3 @@ dist
 *.tar.gz
 *.deb
 deb_dist/
-stdeb.cfg
