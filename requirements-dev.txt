@@ -5,6 +5,7 @@ moto[s3,rds]
 boto3
 requests
 python-dateutil
+paramiko
 prometheus_client
 b2sdk
 minio
