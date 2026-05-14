@@ -84,7 +84,7 @@ jobs:
       - name: Install build dependencies
         run: |
           sudo apt-get update -qq
-          sudo apt-get install -y dh-python python3-all debhelper
+          sudo apt-get install -y dh-python python3-all debhelper build-essential
           pip install stdeb setuptools
 
       - name: Build deb
