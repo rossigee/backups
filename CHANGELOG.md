@@ -1,5 +1,17 @@
 # Changelog
 
+## v2.7.0
+
+### New Features
+- `sftp-folder` source type: backs up remote directories over SFTP using paramiko, streaming files directly into a tar archive with no intermediate copies
+- Deb package build and publish to GitHub Releases on semver-tagged releases
+
+### Enhancements
+- OpenTelemetry span processor switched from `BatchSpanProcessor` to `SimpleSpanProcessor` so spans are exported before process exit
+- Logging initialisation moved before OTEL setup so `-v`/`-d` flags apply to all output
+- Added Dependabot for automated GitHub Actions and pip dependency updates
+- Bumped all GitHub Actions to latest major versions (Node.js 24 compatible)
+
 ## v2.6.0
 
 ### New Features
