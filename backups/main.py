@@ -89,16 +89,20 @@ class BackupRunInstance:
     def run(self):
         with self.tracer.start_as_current_span("backup_run") as root_span:
             root_span.set_attribute("hostname", self.hostname)
+            root_span.set_attribute("service.version", _SERVICE_VERSION)
 
             for source in self.sources:
                 with self.tracer.start_as_current_span("process_source") as source_span:
                     source_span.set_attribute("source.id", source.id)
                     source_span.set_attribute("source.name", source.name)
+                    source_span.set_attribute("source.type", source.type)
                     source_span.set_attribute("hostname", self.hostname)
+                    source.tracer = self.tracer
 
                     for notification in self.notifications:
                         with self.tracer.start_as_current_span("notify_start") as notify_span:
                             notify_span.set_attribute("notification.type", notification.__class__.__name__)
+                            notify_span.set_attribute("source.id", source.id)
                             try:
                                 notification._notify_start(source, self.hostname)
                             except Exception as e:
@@ -108,6 +112,8 @@ class BackupRunInstance:
                         starttime = time.time()
                         self.stats.starttime = datetime.datetime.now()
                         with self.tracer.start_as_current_span("dump_and_compress") as dump_span:
+                            dump_span.set_attribute("source.id", source.id)
+                            dump_span.set_attribute("source.type", source.type)
                             dumpfiles = source.dump_and_compress(self.stats)
                             if not isinstance(dumpfiles, list):
                                 dumpfiles = [dumpfiles]
@@ -123,11 +129,22 @@ class BackupRunInstance:
                         self.stats.dumpedfiles = []
                         self.stats.retainedfiles = []
                         with self.tracer.start_as_current_span("upload_files") as upload_span:
+                            upload_span.set_attribute("source.id", source.id)
+                            upload_span.set_attribute("destination.count", len(self.destinations))
                             for dumpfile in dumpfiles:
                                 for destination in self.destinations:
-                                    uploaded = destination.send(source.id, source.name, dumpfile)
+                                    with self.tracer.start_as_current_span("destination_send") as dest_span:
+                                        dest_span.set_attribute("destination.id", destination.id)
+                                        dest_span.set_attribute("destination.type", destination.__class__.__name__)
+                                        dest_span.set_attribute("source.id", source.id)
+                                        uploaded = destination.send(source.id, source.name, dumpfile)
+                                        dest_span.set_attribute("uploaded.location", uploaded)
                                     self.stats.dumpedfiles.append(uploaded)
-                                    retained = destination.cleanup(source.id, source.name)
+                                    with self.tracer.start_as_current_span("destination_cleanup") as cleanup_span:
+                                        cleanup_span.set_attribute("destination.id", destination.id)
+                                        cleanup_span.set_attribute("destination.type", destination.__class__.__name__)
+                                        retained = destination.cleanup(source.id, source.name)
+                                        cleanup_span.set_attribute("retained.count", len(retained))
                                     self.stats.retainedfiles += retained
                             endtime = time.time()
                             self.stats.endtime = datetime.datetime.now()
@@ -139,6 +156,7 @@ class BackupRunInstance:
                         for notification in self.notifications:
                             with self.tracer.start_as_current_span("notify_success") as notify_span:
                                 notify_span.set_attribute("notification.type", notification.__class__.__name__)
+                                notify_span.set_attribute("source.id", source.id)
                                 try:
                                     notification._notify_success(source, self.hostname, dumpfile, self.stats)
                                 except Exception as e:
@@ -152,6 +170,7 @@ class BackupRunInstance:
                         for notification in self.notifications:
                             with self.tracer.start_as_current_span("notify_failure") as notify_span:
                                 notify_span.set_attribute("notification.type", notification.__class__.__name__)
+                                notify_span.set_attribute("source.id", source.id)
                                 notify_span.set_attribute("error", str(e))
                                 try:
                                     notification._notify_failure(source, self.hostname, e)
@@ -227,6 +246,7 @@ def main():
             for dest_config in config['destinations']:
                 if dest_config['type'] == dest_id:
                     destination = dest_class(dest_config)
+                    destination.tracer = otel_tracer
                     destinations.append(destination)
 
         # Instantiate handlers for any listed notifications
@@ -245,6 +265,7 @@ def main():
             for source_config in config['sources']:
                 if source_config['type'] == source_id:
                     source = source_class(source_config)
+                    source.tracer = otel_tracer
                     sources.append(source)
 
         if len(sources) < 1:

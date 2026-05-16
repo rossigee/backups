@@ -12,3 +12,9 @@ dist
 *.deb
 deb_dist/
 .pybuild/
+debian/.debhelper/
+debian/debhelper-build-stamp
+debian/files
+debian/*.debhelper
+debian/*.substvars
+debian/python3-backups/

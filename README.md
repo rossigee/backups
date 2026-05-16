@@ -70,7 +70,16 @@ export OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4317
 backups /etc/backups/production.json
 ```
 
-Traces include spans for backup runs, source processing, dump/compress, uploads, cleanup, and notifications, with attributes for timing, file counts, and errors.
+Traces include comprehensive spans for:
+- **Backup run** - version, hostname
+- **Per-source processing** - source ID, type, name
+- **Dump operations** - database host/name, file paths, operation timing
+- **Compression/encryption** - operation type, input/output files
+- **Destination uploads** - per-destination spans with upload locations (S3, GDrive, Minio, etc.)
+- **Retention cleanup** - object counts, retained/removed counts
+- **Notifications** - notification type, source ID
+
+All spans include relevant metadata (file paths, database names, bucket names, object counts, timing, errors). The `cloudflare-backup-registry` notification automatically includes the current trace ID in its metadata for end-to-end correlation.
 
 ## Sources
 

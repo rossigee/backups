@@ -7,6 +7,13 @@ import datetime
 from backups.notifications.notification import BackupNotification
 from backups.notifications import backupnotification
 
+try:
+    from opentelemetry.trace import get_current_span
+    from opentelemetry.context import get_current
+    _otel_available = True
+except ImportError:
+    _otel_available = False
+
 
 @backupnotification('cloudflare-backup-registry')
 class CloudflareBackupRegistry(BackupNotification):
@@ -29,22 +36,49 @@ class CloudflareBackupRegistry(BackupNotification):
             logging.error(f"Unable to send notification to Cloudflare Backup Registry: {err}")
 
     def notify_success(self, source, hostname, filename, stats):
+        now = datetime.datetime.now(datetime.timezone.utc)
+        start_time = stats.starttime.isoformat() if hasattr(stats, 'starttime') and stats.starttime else now.isoformat()
+        end_time = stats.endtime.isoformat() if hasattr(stats, 'endtime') and stats.endtime else now.isoformat()
+        
+        encrypted = getattr(source, 'encrypted', False)
+        
+        backup_url = None
+        if filename:
+            if filename.startswith('https://') or filename.startswith('http://'):
+                backup_url = filename
+            elif '/' in filename and not filename.startswith('http'):
+                parts = filename.split('/', 1)
+                if len(parts) == 2:
+                    endpoint = parts[0]
+                    rest = parts[1]
+                    if endpoint.startswith('backups.golder.lan'):
+                        backup_url = f"https://{rest}"
+        
+        metadata = dict(self.metadata)
+        if _otel_available:
+            current_span = get_current_span(get_current())
+            if current_span:
+                span_context = current_span.get_span_context()
+                metadata['trace_id'] = format(span_context.trace_id, '032x')
+        
+        gpg_recipients = getattr(source, 'gpg_recipients', None)
+        if gpg_recipients:
+            metadata['gpg_recipients'] = gpg_recipients
+        
         payload = {
             "run_id": str(uuid.uuid4()),
             "job_name": source.name,
             "agent_id": hostname,
-            "start_time": stats.start_time.isoformat() if hasattr(stats, 'start_time') else None,
-            "end_time": stats.end_time.isoformat() if hasattr(stats, 'end_time') else None,
+            "start_time": start_time,
+            "end_time": end_time,
             "status": "success",
             "bytes_backed_up": getattr(stats, 'size', 0),
-            "encrypted": getattr(source, 'encrypted', False),
-            "encryption_status": "encrypted" if getattr(source, 'encrypted', False) else "unencrypted",
-            "metadata": self.metadata
+            "encrypted": encrypted,
+            "encryption_status": "encrypted" if encrypted else "unencrypted",
+            "backup_url": backup_url,
+            "metadata": metadata
         }
-        if payload['start_time'] and payload['end_time']:
-            self._send(payload)
-        else:
-            logging.warning("Missing start_time or end_time for success notification")
+        self._send(payload)
 
     def notify_failure(self, source, hostname, e):
         end_time = datetime.datetime.now(datetime.timezone.utc).isoformat()

@@ -1,5 +1,13 @@
 # Changelog
 
+## v2.8.0
+
+### Enhancements
+- Comprehensive OpenTelemetry tracing coverage across all sources (MySQL, PostgreSQL, Folder, LVM, Azure, SFTP), destinations (S3, GDrive, Minio, B2, Dropbox), and operations (dump, compress, encrypt, upload, cleanup)
+- Trace span attributes include detailed metadata: database hosts/names, file paths, bucket names, object counts, timing, encryption operation types, and GPG recipient lists
+- Cloudflare Backup Registry notification includes `trace_id` for end-to-end correlation and `gpg_recipients` when asymmetric encryption is used
+- Added `_get_tracer()` fallback to all source and destination classes for graceful degradation when tracing is unavailable
+
 ## v2.7.0
 
 ### New Features

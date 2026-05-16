@@ -1,3 +1,12 @@
+backups (2.8.0-1) unstable; urgency=low
+
+  * Comprehensive OpenTelemetry tracing across all sources, destinations and operations
+  * Trace span attributes include detailed metadata (DB hosts, file paths, buckets, GPG recipients)
+  * Cloudflare Backup Registry notification includes trace_id and gpg_recipients
+  * source package automatically created by stdeb 0.11.0
+
+ -- Ross Golder <ross@golder.org>  Sat, 16 May 2026 14:14:56 +0700
+
 backups (2.7.0-1) unstable; urgency=low
 
   * source package automatically created by stdeb 0.11.0

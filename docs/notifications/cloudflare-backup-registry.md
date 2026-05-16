@@ -30,6 +30,10 @@ Posts backup run reports to the Cloudflare Backup Registry API.
 | `token` | No | API token for Bearer authentication. |
 | `metadata` | No | Arbitrary key/value pairs to include in the payload. |
 
+## Trace Correlation
+
+When OpenTelemetry tracing is enabled, the notification automatically includes the current `trace_id` in the metadata field, enabling end-to-end correlation between backup execution traces and registry records.
+
 ## Events
 
 - **Success**: Submits a backup run report with status "success".

@@ -164,7 +164,33 @@ class TestCloudflareBackupRegistry:
         assert payload['encrypted'] == True
         assert payload['encryption_status'] == 'encrypted'
         assert 'run_id' in payload
-        assert payload['metadata'] == {}
+        assert 'trace_id' in payload['metadata']
+        assert len(payload['metadata']['trace_id']) == 32
+
+    @patch('backups.notifications.cloudflare_backup_registry.requests.post')
+    def test_notify_success_with_gpg_recipients(self, mock_post):
+        config = {'url': 'https://backups.golder.tech/v1/backup-runs', 'token': 'test_token'}
+        registry = CloudflareBackupRegistry(config)
+
+        mock_source = Mock()
+        mock_source.name = 'test_job'
+        mock_source.encrypted = True
+        mock_source.gpg_recipients = ['ops@example.com', 'security@example.com']
+        hostname = 'testhost'
+        filename = 'test.tar'
+        mock_stats = Mock()
+        mock_stats.start_time = Mock()
+        mock_stats.start_time.isoformat.return_value = '2023-01-01T00:00:00'
+        mock_stats.end_time = Mock()
+        mock_stats.end_time.isoformat.return_value = '2023-01-01T00:10:00'
+        mock_stats.size = 1000
+
+        registry.notify_success(mock_source, hostname, filename, mock_stats)
+
+        mock_post.assert_called_once()
+        args, kwargs = mock_post.call_args
+        payload = kwargs['json']
+        assert payload['metadata']['gpg_recipients'] == ['ops@example.com', 'security@example.com']
 
     @patch('backups.notifications.cloudflare_backup_registry.requests.post')
     def test_notify_failure(self, mock_post):

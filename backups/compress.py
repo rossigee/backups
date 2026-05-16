@@ -3,7 +3,7 @@ import logging
 
 from backups.exceptions import BackupException
 
-def compress(filename):
+def compress(filename, tracer=None):
     logging.info("Compressing '%s'..." % filename)
     compfilename = '%s.gz' % filename
     comperrsname = '%s.err' % filename
