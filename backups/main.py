@@ -259,11 +259,18 @@ def main():
                     notifications.append(notification)
 
         # Loop through sections, process those we have sources for
+        global_encryption = config.get('encryption', {})
         sources = []
         for source_id, source_class in backups.sources.handlers.items():
             logging.debug("Source(%s) - %s" % (source_id, source_class))
             for source_config in config['sources']:
                 if source_config['type'] == source_id:
+                    source_config = dict(source_config)
+                    if 'passphrase' not in source_config and 'recipients' not in source_config:
+                        if 'passphrase' in global_encryption:
+                            source_config['passphrase'] = global_encryption['passphrase']
+                        if 'recipients' in global_encryption:
+                            source_config['recipients'] = global_encryption['recipients']
                     source = source_class(source_config)
                     source.tracer = otel_tracer
                     sources.append(source)

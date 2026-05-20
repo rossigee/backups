@@ -26,27 +26,37 @@ Configuration is a single JSON file:
 
 ### Encryption (optional)
 
-Add to the top level to encrypt backups before upload:
+Encryption can be specified at the top level (applies to all sources) or per-source. Per-source settings override top-level.
 
+Top-level (applies to all sources):
 ```json
 {
   "encryption": {
-    "type": "symmetric",
     "passphrase": "YOUR_PASSPHRASE"
-  }
+  },
+  "sources": [...]
 }
 ```
 
-Or asymmetric (GPG public key):
-
+Or per-source:
 ```json
 {
-  "encryption": {
-    "type": "asymmetric",
-    "recipient": "ops@example.com"
-  }
+  "sources": [
+    {
+      "name": "mysql-db",
+      "type": "mysql",
+      "passphrase": "YOUR_PASSPHRASE"
+    },
+    {
+      "name": "pg-db",
+      "type": "postgresql",
+      "recipients": ["ops@example.com"]
+    }
+  ]
 }
 ```
+
+Use `passphrase` for symmetric GPG encryption, or `recipients` (array) for asymmetric/GPG public key encryption.
 
 ## Tracing Configuration
 
