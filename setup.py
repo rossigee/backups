@@ -1,6 +1,6 @@
 from setuptools import setup
 
-setup(name = 'backups',
+setup(name = 'rossigee-backups',
     version = '2.9.0',
     description = 'Backup orchestration tool for databases, folders and cloud snapshots',
     long_description = (
