@@ -30,4 +30,4 @@ COPY . /tmp/backups
 RUN pip3 install --break-system-packages build && \
   cd /tmp/backups && \
   python3 -m build && \
-  pip3 install --break-system-packages dist/rossigee-backups-*.tar.gz
+  pip3 install --break-system-packages dist/*.tar.gz
