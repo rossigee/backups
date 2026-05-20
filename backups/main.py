@@ -51,6 +51,16 @@ class _NoOpTracer:
         yield _NoOpSpan()
 
 
+def _apply_default_encryption(source_config, default_encryption):
+    source_config = dict(source_config)
+    if 'passphrase' not in source_config and 'recipients' not in source_config:
+        if 'passphrase' in default_encryption:
+            source_config['passphrase'] = default_encryption['passphrase']
+        if 'recipients' in default_encryption:
+            source_config['recipients'] = default_encryption['recipients']
+    return source_config
+
+
 # Default set of modules to import
 default_modules = [
     'backups.sources.azure_managed_disk',
@@ -259,18 +269,15 @@ def main():
                     notifications.append(notification)
 
         # Loop through sections, process those we have sources for
-        global_encryption = config.get('encryption', {})
+        default_encryption = config.get('encryption', {})
+        if 'passphrase' in default_encryption and 'recipients' in default_encryption:
+            logging.warning("Top-level encryption block has both 'passphrase' and 'recipients'; 'recipients' takes priority")
         sources = []
         for source_id, source_class in backups.sources.handlers.items():
             logging.debug("Source(%s) - %s" % (source_id, source_class))
             for source_config in config['sources']:
                 if source_config['type'] == source_id:
-                    source_config = dict(source_config)
-                    if 'passphrase' not in source_config and 'recipients' not in source_config:
-                        if 'passphrase' in global_encryption:
-                            source_config['passphrase'] = global_encryption['passphrase']
-                        if 'recipients' in global_encryption:
-                            source_config['recipients'] = global_encryption['recipients']
+                    source_config = _apply_default_encryption(source_config, default_encryption)
                     source = source_class(source_config)
                     source.tracer = otel_tracer
                     sources.append(source)
