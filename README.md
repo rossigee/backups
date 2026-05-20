@@ -58,6 +58,10 @@ Or per-source:
 
 Use `passphrase` for symmetric GPG encryption, or `recipients` (array) for asymmetric/GPG public key encryption.
 
+> **Override semantics**: if a source defines either `passphrase` or `recipients`, the top-level `encryption` block is ignored entirely for that source.
+
+> **Note**: older configs containing `"type": "symmetric"` or `"type": "asymmetric"` fields in the encryption block should be updated — those fields were never implemented and are ignored.
+
 ## Tracing Configuration
 
 OpenTelemetry OTLP tracing is supported for observability. Tracing is disabled by default (zero performance impact).

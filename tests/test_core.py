@@ -230,3 +230,41 @@ class TestTracing:
         instance.destinations = []
         instance.notifications = []
         instance.run()
+
+
+class TestApplyDefaultEncryption:
+    def test_global_passphrase_applied_to_source(self):
+        src = {'type': 'mysql', 'name': 'db'}
+        result = backups.main._apply_default_encryption(src, {'passphrase': 'secret'})
+        assert result['passphrase'] == 'secret'
+
+    def test_global_recipients_applied_to_source(self):
+        src = {'type': 'mysql', 'name': 'db'}
+        result = backups.main._apply_default_encryption(src, {'recipients': ['ops@example.com']})
+        assert result['recipients'] == ['ops@example.com']
+
+    def test_per_source_passphrase_overrides_global(self):
+        src = {'type': 'mysql', 'name': 'db', 'passphrase': 'mine'}
+        result = backups.main._apply_default_encryption(src, {'passphrase': 'global'})
+        assert result['passphrase'] == 'mine'
+
+    def test_per_source_recipients_overrides_global(self):
+        src = {'type': 'mysql', 'name': 'db', 'recipients': ['local@example.com']}
+        result = backups.main._apply_default_encryption(src, {'recipients': ['global@example.com']})
+        assert result['recipients'] == ['local@example.com']
+
+    def test_per_source_passphrase_blocks_global_recipients(self):
+        src = {'type': 'mysql', 'name': 'db', 'passphrase': 'mine'}
+        result = backups.main._apply_default_encryption(src, {'recipients': ['global@example.com']})
+        assert 'recipients' not in result
+
+    def test_no_global_encryption(self):
+        src = {'type': 'mysql', 'name': 'db'}
+        result = backups.main._apply_default_encryption(src, {})
+        assert 'passphrase' not in result
+        assert 'recipients' not in result
+
+    def test_original_config_not_mutated(self):
+        src = {'type': 'mysql', 'name': 'db'}
+        backups.main._apply_default_encryption(src, {'passphrase': 'secret'})
+        assert 'passphrase' not in src
