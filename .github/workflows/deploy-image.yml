@@ -107,7 +107,34 @@ jobs:
       - name: Build deb
         run: dpkg-buildpackage -us -uc -b
 
+      - name: Extract release notes from CHANGELOG
+        id: release-notes
+        run: |
+          VERSION="${{ github.ref_name }}"
+          # Remove 'v' prefix if present
+          VERSION="${VERSION#v}"
+          
+          # Extract release notes for this version from CHANGELOG.md
+          # Matches from "## vX.Y.Z" to next "## " or end of file
+          awk -v version="## v$VERSION" '
+            BEGIN { RS = "\n## "; found = 0 }
+            $0 ~ version { found = 1; next }
+            found && /^## / { exit }
+            found { print }
+          ' CHANGELOG.md > release-notes.txt
+          
+          # Check if we got content
+          if [ -s release-notes.txt ]; then
+            echo "body<<EOF" >> $GITHUB_OUTPUT
+            cat release-notes.txt >> $GITHUB_OUTPUT
+            echo "EOF" >> $GITHUB_OUTPUT
+          else
+            echo "No release notes found for $VERSION" >&2
+            exit 1
+          fi
+
       - name: Upload deb to GitHub Release
         uses: softprops/action-gh-release@v3
         with:
           files: ../python3-backups_*.deb
+          body_path: release-notes.txt

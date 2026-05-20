@@ -7,17 +7,18 @@
 
 ## Steps
 
-1. **Update version** in `setup.py` and `Makefile`:
+1. **Update version** in `setup.py`, `debian/changelog`, and `Makefile`:
    ```bash
    # setup.py — set version = 'X.Y.Z'
    # Makefile — set VERSION=X.Y.Z
+   # debian/changelog — add X.Y.Z-1 entry (dpkg-buildpackage uses this to version the .deb)
    ```
 
-2. **Update `CHANGELOG.md`** — move unreleased changes under the new version heading.
+2. **Update `CHANGELOG.md`** — add the new version heading with release notes.
 
-3. **Commit the version bump and changelog**:
+3. **Commit the version bump, deb changelog and changelog**:
    ```bash
-   git add setup.py Makefile CHANGELOG.md
+   git add setup.py Makefile debian/changelog CHANGELOG.md
    git commit -m "Bump version to X.Y.Z"
    ```
 
@@ -47,6 +48,8 @@
    ```bash
    python setup.py --command-packages=stdeb.command bdist_deb
    ```
+
+   Note: When the tag is pushed, GitHub Actions automatically creates a GitHub Release with release notes extracted from `CHANGELOG.md`.
 
 ## Versioning
 

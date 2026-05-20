@@ -1,5 +1,19 @@
 # Changelog
 
+## v2.9.0
+
+### New Features
+- Top-level encryption configuration support — global `encryption` block applies to all sources
+- PyPI package publishing on semver-tagged releases
+
+### Enhancements
+- Use FQDN for hostname in notifications instead of short hostname
+
+### Bug Fixes
+- Fix PyPI package name to match project (`rossigee-backups`)
+- Fix Docker package install to use correct `rossigee-backups` pip package
+- Fix Docker pip install glob pattern
+
 ## v2.8.0
 
 ### Enhancements
