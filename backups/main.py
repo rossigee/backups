@@ -85,7 +85,8 @@ default_modules = [
 class BackupRunInstance:
     def __init__(self):
         import platform
-        self.hostname = platform.node()
+        import socket
+        self.hostname = socket.getfqdn(platform.node())
         self.source_modules = []
         self.sources = []
         self.destination_modules = []
