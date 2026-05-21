@@ -115,11 +115,11 @@ jobs:
           VERSION="${VERSION#v}"
           
           # Extract release notes for this version from CHANGELOG.md
-          # Matches from "## vX.Y.Z" to next "## " or end of file
-          awk -v version="## v$VERSION" '
+          # Matches from "## vX.Y.Z" to next section or end of file
+          awk -v version="^v$VERSION" '
             BEGIN { RS = "\n## "; found = 0 }
-            $0 ~ version { found = 1; next }
-            found && /^## / { exit }
+            $0 ~ version { found = 1 }
+            found && /^[a-z]/ { if (found_before) exit; found_before=1 }
             found { print }
           ' CHANGELOG.md > release-notes.txt
           
