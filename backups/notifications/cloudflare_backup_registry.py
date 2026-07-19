@@ -39,8 +39,9 @@ class CloudflareBackupRegistry(BackupNotification):
         now = datetime.datetime.now(datetime.timezone.utc)
         start_time = stats.starttime.isoformat() if hasattr(stats, 'starttime') and stats.starttime else now.isoformat()
         end_time = stats.endtime.isoformat() if hasattr(stats, 'endtime') and stats.endtime else now.isoformat()
-        
-        encrypted = getattr(source, 'encrypted', False)
+
+        gpg_recipients = getattr(source, 'gpg_recipients', None)
+        encrypted = bool(gpg_recipients)
         
         backup_url = None
         if filename:
@@ -60,8 +61,7 @@ class CloudflareBackupRegistry(BackupNotification):
             if current_span:
                 span_context = current_span.get_span_context()
                 metadata['trace_id'] = format(span_context.trace_id, '032x')
-        
-        gpg_recipients = getattr(source, 'gpg_recipients', None)
+
         if gpg_recipients:
             metadata['gpg_recipients'] = gpg_recipients
         
