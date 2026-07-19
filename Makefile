@@ -1,4 +1,4 @@
-VERSION=2.7.0
+VERSION=2.9.0
 
 test:
 	docker build . -t rossigee/backups:test && \

@@ -3,7 +3,7 @@ Maintainer: Ross Golder <ross@golder.org>
 Section: python
 Priority: optional
 Build-Depends: python3-setuptools, python3-all, debhelper (>= 12)
-Standards-Version: 4.7.0
+Standards-Version: 4.7.4
 Homepage: https://github.com/rossigee/backups
 
 Package: python3-backups

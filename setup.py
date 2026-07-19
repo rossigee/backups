@@ -30,7 +30,7 @@ setup(name = 'rossigee-backups',
             'opentelemetry-api',
             'opentelemetry-sdk',
             'opentelemetry-exporter-otlp-proto-grpc',
-            'grpcio>=1.80.0',
+            'grpcio>=1.82.1',
         ]
     },
     entry_points = {
