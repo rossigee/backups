@@ -1,5 +1,10 @@
 # Changelog
 
+## v2.9.1
+
+### Bug Fixes
+- Fix Cloudflare Backup Registry reporting `encrypted: false` regardless of actual encryption state (checked non-existent `encrypted` attribute instead of `gpg_recipients`)
+
 ## v2.9.0
 
 ### New Features
