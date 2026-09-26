@@ -1,5 +1,15 @@
 # Changelog
 
+## v2.9.2
+
+### New Features
+- Add S3 backup source for backing up S3 bucket objects with minio client
+- Configurable S3 endpoints, regions, and credentials
+- Support for prefix filtering and exclude patterns in S3 backups
+
+### Bug Fixes
+- Fix debian package dependency declarations for python3-dateutil, python3-minio, and python3-boto3
+
 ## v2.9.1
 
 ### Bug Fixes
