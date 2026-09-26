@@ -140,22 +140,21 @@ jobs:
           files: ../python3-backups_*.deb
           body_path: release-notes.txt
 
-      - name: Find deb file path
-        id: deb-path
+      - name: Copy deb into workspace
         run: |
           DEB_FILE=$(find .. -maxdepth 1 -name "python3-backups_*.deb" -type f | head -1)
           if [ -z "$DEB_FILE" ]; then
             echo "Error: No .deb file found"
             exit 1
           fi
-          echo "path=$DEB_FILE" >> $GITHUB_OUTPUT
-          echo "Found .deb: $DEB_FILE"
+          cp "$DEB_FILE" ./
+          echo "Copied $(basename $DEB_FILE) to workspace"
 
       - name: Upload deb to debs.golder.tech
         continue-on-error: true
         uses: rossigee/debian-repo-upload-action@master
         with:
-          file: ${{ steps.deb-path.outputs.path }}
+          file: python3-backups_*.deb
           base-url: https://debs.golder.tech
           token: ${{ secrets.DEBIAN_REPO_CI_TOKEN }}
           suite: stable
