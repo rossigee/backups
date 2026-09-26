@@ -148,8 +148,10 @@ jobs:
             echo "Error: No .deb file found"
             exit 1
           fi
-          echo "path=$DEB_FILE" >> $GITHUB_OUTPUT
-          echo "Found .deb: $DEB_FILE"
+          # Convert to absolute path for the action
+          DEB_ABS=$(cd $(dirname "$DEB_FILE") && pwd)/$(basename "$DEB_FILE")
+          echo "path=$DEB_ABS" >> $GITHUB_OUTPUT
+          echo "Found .deb: $DEB_ABS"
 
       - name: Upload deb to debs.golder.tech
         continue-on-error: true
