@@ -145,6 +145,7 @@ jobs:
             echo "Uploading $deb to debs.golder.tech..."
             curl -f -X POST \
               -H "Authorization: Bearer ${{ secrets.DEBIAN_REPO_CI_TOKEN }}" \
-              -F "file=@$deb" \
-              https://debs.golder.tech/api/v1/upload/stable/main
+              -H "Content-Type: application/octet-stream" \
+              --data-binary "@$deb" \
+              "https://debs.golder.tech/api/v1/upload?suite=stable&component=main"
           done
