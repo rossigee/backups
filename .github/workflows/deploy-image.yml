@@ -138,3 +138,13 @@ jobs:
         with:
           files: ../python3-backups_*.deb
           body_path: release-notes.txt
+
+      - name: Upload deb to debs.golder.tech
+        run: |
+          for deb in ../python3-backups_*.deb; do
+            echo "Uploading $deb to debs.golder.tech..."
+            curl -f -X POST \
+              -H "Authorization: Bearer ${{ secrets.DEBIAN_REPO_CI_TOKEN }}" \
+              -F "file=@$deb" \
+              https://debs.golder.tech/api/v1/upload/stable/main
+          done
