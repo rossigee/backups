@@ -139,12 +139,22 @@ jobs:
           files: ../python3-backups_*.deb
           body_path: release-notes.txt
 
+      - name: Find deb file
+        id: find-deb
+        run: |
+          DEB_FILE=$(ls ../python3-backups_*.deb 2>/dev/null | head -1)
+          if [ -z "$DEB_FILE" ]; then
+            echo "Error: No .deb file found"
+            exit 1
+          fi
+          echo "deb_file=$DEB_FILE" >> $GITHUB_OUTPUT
+
       - name: Upload deb to debs.golder.tech
         id: debian-upload
         continue-on-error: true
         uses: rossigee/debian-repo-upload-action@v1
         with:
-          file: ../python3-backups_*.deb
+          file: ${{ steps.find-deb.outputs.deb_file }}
           base-url: https://debs.golder.tech
           token: ${{ secrets.DEBIAN_REPO_CI_TOKEN }}
           suite: stable
