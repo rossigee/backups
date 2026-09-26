@@ -1,7 +1,7 @@
 from setuptools import setup
 
 setup(name = 'rossigee-backups',
-    version = '2.9.1',
+    version = '2.10.0',
     description = 'Backup orchestration tool for databases, folders and cloud snapshots',
     long_description = (
         'A Python backup orchestration tool that cycles through sources '
@@ -24,6 +24,8 @@ setup(name = 'rossigee-backups',
         'requests',
         'python-dateutil',
         'paramiko',
+        'minio',
+        'boto3',
     ],
     extras_require = {
         'tracing': [

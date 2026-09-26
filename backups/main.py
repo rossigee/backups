@@ -68,6 +68,7 @@ default_modules = [
     'backups.sources.mysql',
     'backups.sources.postgresql',
     'backups.sources.rds',
+    'backups.sources.s3',
     'backups.sources.sftpfolder',
     'backups.sources.snapshot',
     'backups.destinations.s3',
