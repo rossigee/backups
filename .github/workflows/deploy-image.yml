@@ -156,7 +156,7 @@ jobs:
         uses: rossigee/debian-repo-upload-action@master
         with:
           file: ${{ steps.deb-path.outputs.path }}
-          base-url: https://debs.golder.tech
+          base_url: https://debs.golder.tech
           token: ${{ secrets.DEBIAN_REPO_CI_TOKEN }}
           suite: stable
           component: main
