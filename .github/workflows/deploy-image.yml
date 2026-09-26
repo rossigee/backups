@@ -140,12 +140,13 @@ jobs:
           body_path: release-notes.txt
 
       - name: Upload deb to debs.golder.tech
+        continue-on-error: true
         run: |
           for deb in ../python3-backups_*.deb; do
             echo "Uploading $deb to debs.golder.tech..."
-            curl -f -X POST \
+            curl -v -X POST \
               -H "Authorization: Bearer ${{ secrets.DEBIAN_REPO_CI_TOKEN }}" \
               -H "Content-Type: application/octet-stream" \
               --data-binary "@$deb" \
-              "https://debs.golder.tech/api/v1/upload?suite=stable&component=main"
+              "https://debs.golder.tech/api/v1/upload?suite=stable&component=main" || echo "Upload failed (service may be temporarily unavailable)"
           done
