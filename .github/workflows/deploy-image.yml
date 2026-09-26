@@ -140,9 +140,15 @@ jobs:
           files: ../python3-backups_*.deb
           body_path: release-notes.txt
 
+      - name: Verify deb file exists
+        run: |
+          echo "Checking for .deb files in parent directory..."
+          ls -lh ../*.deb 2>/dev/null || echo "No .deb files found"
+          find .. -maxdepth 1 -name "*.deb" -type f
+
       - name: Upload deb to debs.golder.tech
         continue-on-error: true
-        uses: rossigee/debian-repo-upload-action@v1
+        uses: rossigee/debian-repo-upload-action@master
         with:
           file: ../python3-backups_*.deb
           base-url: https://debs.golder.tech
