@@ -8,7 +8,7 @@
 - Support for prefix filtering and exclude patterns in S3 backups
 
 ### Bug Fixes
-- Fix debian package dependency declarations for python3-dateutil, python3-minio, and python3-boto3
+- Fix debian package dependency declarations for python3-dateutil and python3-boto3 (removed non-existent python3-minio)
 
 ## v2.9.1
 
