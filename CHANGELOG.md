@@ -1,5 +1,10 @@
 # Changelog
 
+## v2.9.3
+
+### Bug Fixes
+- Remove non-existent python3-minio apt dependency from debian package
+
 ## v2.9.2
 
 ### New Features
